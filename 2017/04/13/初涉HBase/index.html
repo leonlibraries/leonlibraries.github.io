@@ -25,7 +25,7 @@ Table ： 表即文件，以下介绍的都是表内元素
 Row Key 行键：可以理解为一个单元数据的 ID
 Column Families 列族 ： 定义表的时候需要">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
-<meta property="og:updated_time" content="2017-04-13T08:43:37.000Z">
+<meta property="og:updated_time" content="2017-04-13T08:47:17.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="初涉 HBase">
 <meta name="twitter:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
@@ -221,7 +221,7 @@ Column Families 列族 ： 定义表的时候需要">
 <ul>
 <li>HFile 是一次性的，每次 flush 都将生成一个新的 HFile，但后续小文件会合并成大文件。</li>
 <li>HFile 内置了一个 B+ 树索引，当 RegionServer 启动后并且 HFile 被打开的时候，这个索引会被加载到 Block Cache 即内存里；</li>
-<li>Root index 指向 Interm index；</li>
+<li>Root index 指向 Intermediate Level Data Index Blocks；</li>
 <li>KeyValues 存储在增长中的队列中的数据块里，数据块可以指定大小，默认64k，数据块越大，顺序检索能力越强；数据块越小，随机读写能力越强，需要权衡；</li>
 <li>Intermediate Level Data Index Blocks 维护了每一个数据块的最后一个 key；</li>
 <li>根据Intermediate Level Data Index Blocks找到对应的叶子节点 leaf index，就可以找到数据（Data Block）了；</li>
@@ -273,7 +273,7 @@ Column Families 列族 ： 定义表的时候需要">
 
 
 
-    <a data-url="https://leonlibraries.github.io/2017/04/13/初涉HBase/" data-id="cj1g0bni3000bac67j06iko03" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+    <a data-url="https://leonlibraries.github.io/2017/04/13/初涉HBase/" data-id="cj1g5vzi7000eew67e8etanif" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
 <script>
     (function ($) {
         $('body').on('click', function() {
