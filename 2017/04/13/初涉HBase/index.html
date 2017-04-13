@@ -25,7 +25,7 @@ Table ： 表即文件，以下介绍的都是表内元素
 Row Key 行键：可以理解为一个单元数据的 ID
 Column Families 列族 ： 定义表的时候需要">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
-<meta property="og:updated_time" content="2017-04-13T08:47:17.000Z">
+<meta property="og:updated_time" content="2017-04-13T08:48:46.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="初涉 HBase">
 <meta name="twitter:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
@@ -250,7 +250,7 @@ Column Families 列族 ： 定义表的时候需要">
 <p>但有一点不解，这里说 HMaster 会将崩溃的 WAL 日志拆分成多个文件传输到存活的 Regions Server之中，然后 replay it。<br>服务器如果断电崩溃，这样的 WAL 数据是怎么从宕机的服务器中传出来的？</p>
 <p>WAL 的写入过程中实际上是包含了 HDFS 的副本拷贝的，WAL 在整个集群里实际上是有副本的存在的，因此即使一台机器挂了，也不影响  HMaster 对宕机节点的 WAL 的获取。</p>
 <p><img src="/2017/04/13/初涉HBase/replication1.png" alt=""><br><img src="/2017/04/13/初涉HBase/replication2.png" alt=""><br>HBase 为 WAL 以及 HFile 创建 HDFS 副本</p>
-<h2 id="HBase-表数据要注意的几点"><a href="#HBase-表数据要注意的几点" class="headerlink" title="HBase 表数据要注意的几点"></a>HBase 表数据要注意的几点</h2><ul>
+<h2 id="HBase-表设计要注意的几点"><a href="#HBase-表设计要注意的几点" class="headerlink" title="HBase 表设计要注意的几点"></a>HBase 表设计要注意的几点</h2><ul>
 <li>HBase 只对 Row Key 索引，其余的单元数据的不做索引，因此 Row Key 如何命名很重要；</li>
 <li>实际生产有时需要对 Row Key 哈希化，使得 Row Key 长度一致，提高数据存储性能，但是牺牲了排序能力；</li>
 <li>HBase 表比关系型数据更加灵活，可以存储任何二进制数据在表中，无关数据类型；</li>
@@ -273,7 +273,7 @@ Column Families 列族 ： 定义表的时候需要">
 
 
 
-    <a data-url="https://leonlibraries.github.io/2017/04/13/初涉HBase/" data-id="cj1g5vzi7000eew67e8etanif" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+    <a data-url="https://leonlibraries.github.io/2017/04/13/初涉HBase/" data-id="cj1g5xu4t0009io67luqy4o5h" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
 <script>
     (function ($) {
         $('body').on('click', function() {
