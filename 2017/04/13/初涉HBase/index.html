@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>初涉 HBase | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="大数据,Hadoop,HBase" />
+    
+    <meta name="description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
+数据结构和基础概念
+
+Table ： 表即文件，以下介绍的都是表内元素
+Row Key 行键：可以理解为一个单元数据的 ID
+Column Families 列族 ： 定义表的时候需要">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初涉 HBase">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
+数据结构和基础概念
+
+Table ： 表即文件，以下介绍的都是表内元素
+Row Key 行键：可以理解为一个单元数据的 ID
+Column Families 列族 ： 定义表的时候需要">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
+<meta property="og:updated_time" content="2017-04-13T08:43:37.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="初涉 HBase">
+<meta name="twitter:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
+数据结构和基础概念
+
+Table ： 表即文件，以下介绍的都是表内元素
+Row Key 行键：可以理解为一个单元数据的 ID
+Column Families 列族 ： 定义表的时候需要">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-初涉HBase" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        初涉 HBase
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-subtitle">
+                <a href="/2017/04/13/初涉HBase/" class="article-date">
+    <time datetime="2017-04-13T07:56:15.000Z" itemprop="datePublished">2017-04-13</time>
+</a>
+                
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HBase/">HBase</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hadoop/">Hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/大数据/">大数据</a></li></ul>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。</p>
+<h2 id="数据结构和基础概念"><a href="#数据结构和基础概念" class="headerlink" title="数据结构和基础概念"></a>数据结构和基础概念</h2><p><img src="/2017/04/13/初涉HBase/datastructure1.jpg" alt=""><br><img src="/2017/04/13/初涉HBase/datastructure2.jpg" alt=""></p>
+<ul>
+<li>Table ： 表即文件，以下介绍的都是表内元素</li>
+<li>Row Key 行键：可以理解为一个单元数据的 ID</li>
+<li>Column Families 列族 ： 定义表的时候需要预先定义，一旦定以后不能轻易修改</li>
+<li>Column Qualify 列标识： 可动态增删字段，也是 HBase 最大的特色</li>
+<li>Cell 单元 ：Row Key + Column Families + Column Qualify 为一个单元，存储在单元里的数据叫单元数据</li>
+<li>Timestamp 时间戳： 每个字段下的数据都有一个时间戳，每次更新只是将数据以最新的时间戳覆盖上去，默认取最新时间戳的数据</li>
+</ul>
+<h2 id="PUT-GET-amp-SCAN"><a href="#PUT-GET-amp-SCAN" class="headerlink" title="PUT/GET &amp; SCAN"></a>PUT/GET &amp; SCAN</h2><ul>
+<li>put get是操作指定行的数据，需提供 Row Key</li>
+<li>scan 操作一定范围内的数据，需指定开始 Row Key 和结束 Row Key ，如果不指定默认取全部行数据</li>
+</ul>
+<h2 id="基本架构"><a href="#基本架构" class="headerlink" title="基本架构"></a>基本架构</h2><p><img src="/2017/04/13/初涉HBase/architect.png" alt="architect"></p>
+<ul>
+<li><strong>HMaster</strong>: 负责 DDL 创建或删除tables，同一时间只能有一个 active 状态的 master 存在，其余 standby；</li>
+<li><strong>Zookeeper</strong>: 判定 HMaster 的状态，谁先创建临时节点谁就激活， 记录 Meta Table 的具体位置等功能；</li>
+<li><strong>RegionServer</strong>: 一个 RegionServer 中可维护多个 region，一个 region 维护着一个 key space 记录着 key 的开始和结束，一个 region 里包含多个 store，一个 store（也就是逻辑上的列族，column family） 里有一个 MemStore 以及零个或多个 HFiles，数据在每一个列族访问和存储是相互分开的;</li>
+</ul>
+<h2 id="写与写缓存（MemStore）"><a href="#写与写缓存（MemStore）" class="headerlink" title="写与写缓存（MemStore）"></a>写与写缓存（MemStore）</h2><p>先来看看 Region Server 大致的结构<br><img src="/2017/04/13/初涉HBase/regionserver.png" alt="regionserver"></p>
+<ol>
+<li><strong>WAL</strong>: Write Ahead Log，顺序存储未持久化完成的新数据，用于从错误中恢复；(Eventually Consistency 的保证)</li>
+<li><strong>BlockCache</strong>: LRU 读缓存，存于内存；(rowkey –&gt; row)</li>
+<li><strong>MemStore</strong>: 写缓存，即刷盘前的FS cache，每一个 region 的每一个 column family 有一个 MemStore;</li>
+<li><strong>HFile</strong>: 刷盘时，MemStore 数据会转化成 Hfile，是磁盘上的数据文件，存储有序的键值对序列。</li>
+</ol>
+<p>那么写的过程是怎样的呢？</p>
+<p>client request —&gt; 写WAL(顺序存储速度快，存于磁盘) —&gt; ack</p>
+<p><img src="/2017/04/13/初涉HBase/write1.png" alt="write1"></p>
+<p>WAL —&gt; MemStore —&gt; flush to HFiles</p>
+<p><img src="/2017/04/13/初涉HBase/write2.png" alt="write2"><br><img src="/2017/04/13/初涉HBase/write3.png" alt="write3"></p>
+<blockquote>
+<p><strong>Tips</strong>：HBase 中每个 column family 对应一个 MemStore，但对应多个 HFiles，也就是包含了多个 autual cells或者 KeyValue 实例，这些KeyValue 是以有序的方式组织成 HFiles 的，顺序且一次性写入，每次 flush 都会生成一个新的 HFile，非常快速。（这里的 CF 是 column family）,关于 HFile 的拆分和合并，后续会有交代。</p>
+</blockquote>
+<h2 id="读与读缓存-BlockCache"><a href="#读与读缓存-BlockCache" class="headerlink" title="读与读缓存(BlockCache)"></a>读与读缓存(BlockCache)</h2><p>在没有缓存的情况下，整个读的流程应该是这样的<br><img src="/2017/04/13/初涉HBase/firstread.png" alt="firstread"></p>
+<ol>
+<li>client 从 zk 里拿 Meta table的访问地址并访问 Meta table；</li>
+<li>client 依据 Meta table 查到 row key想访问的那一个 region server A，并且将其meta缓存起来；</li>
+<li>从这个 region server A 中获取到 row key 对应的 行（Row）；</li>
+<li>之后的查询都是从 client 缓存读取 meta 信息从对应的 region server 查询；(如果缓存中查询不到对应的数据那么将从第一步重新开始)<br><img src="/2017/04/13/初涉HBase/metadata.png" alt="metadata"><br>metatable 维护了一个 B 树结构。</li>
+</ol>
+<h2 id="HFiles-数据结构（重点）"><a href="#HFiles-数据结构（重点）" class="headerlink" title="HFiles 数据结构（重点）"></a>HFiles 数据结构（重点）</h2><p><img src="/2017/04/13/初涉HBase/hfiles3.png" alt="hfiles3"><br>逻辑上包含以下几个部分：</p>
+<ul>
+<li><strong>Scanned block section</strong>: 在 HBase 顺序扫描 HFiles 的时候需要被读取的块内容；</li>
+<li><strong>Non-scanned block section</strong>: 在 HBase 顺序扫描 HFiles 的时候不会被读取的块内容，主要包括Meta Block和Intermediate Level Data Index Blocks两部分；</li>
+<li><strong>Load-on-open-section</strong>: 这部分数据在region server启动时，需要被加载到 BlockCache 中。包括FileInfo、Bloom filter block、data block index和meta block index；</li>
+<li><strong>Trailer</strong>: 这部分主要记录了HFile的基本信息、各个部分的偏移值和寻址信息。<br><img src="/2017/04/13/初涉HBase/hfiles1.png" alt="hfiles1"><br><img src="/2017/04/13/初涉HBase/hfiles2.png" alt="hfiles2"></li>
+</ul>
+<p><strong>小结</strong>：</p>
+<ul>
+<li>HFile 是一次性的，每次 flush 都将生成一个新的 HFile，但后续小文件会合并成大文件。</li>
+<li>HFile 内置了一个 B+ 树索引，当 RegionServer 启动后并且 HFile 被打开的时候，这个索引会被加载到 Block Cache 即内存里；</li>
+<li>Root index 指向 Interm index；</li>
+<li>KeyValues 存储在增长中的队列中的数据块里，数据块可以指定大小，默认64k，数据块越大，顺序检索能力越强；数据块越小，随机读写能力越强，需要权衡；</li>
+<li>Intermediate Level Data Index Blocks 维护了每一个数据块的最后一个 key；</li>
+<li>根据Intermediate Level Data Index Blocks找到对应的叶子节点 leaf index，就可以找到数据（Data Block）了；</li>
+<li>支持 Bloom Filter（用于排除 没包含指定 rowkey 的 HFile） 与 Time Range Info（用于排除不在指定时间断的 HFile）；</li>
+</ul>
+<h2 id="合并读"><a href="#合并读" class="headerlink" title="合并读"></a>合并读</h2><ol>
+<li>先从BlockCache（<strong>读缓存</strong>）中找对应的 row；</li>
+<li>如果缓存里找不到，那就去查询 MemStore（<strong>写缓存</strong>）找对应的最近的写数据；</li>
+<li>如果两个地方都没用，那么就会根据 BlockCache 中的 B+ Tree Index（mentioned above）以及 Bloom Filter找 HFile 里的数据；</li>
+<li>两个缓存无法命中且大量 HFile 未合并的时候，将有可能对很多的 HFiles 进行读操作（这叫 <strong>读放大（Read Amplification</strong>）。<br><img src="/2017/04/13/初涉HBase/readamplification.png" alt=""><h2 id="HBase-压缩策略"><a href="#HBase-压缩策略" class="headerlink" title="HBase 压缩策略"></a>HBase 压缩策略</h2><h4 id="Minor-Compaction"><a href="#Minor-Compaction" class="headerlink" title="Minor Compaction"></a><em>Minor Compaction</em></h4>自动检查小文件，合并到大文件，从而减少碎片文件。<br><img src="/2017/04/13/初涉HBase/minicompaction.png" alt=""><h4 id="Major-Compaction"><a href="#Major-Compaction" class="headerlink" title="Major Compaction"></a><em>Major Compaction</em></h4>每个 CF 中，将 HFiles 合并到一个大的 HFile 中，即CF 与 HFile 最终变成一一对应的关系。<br><img src="/2017/04/13/初涉HBase/majorcompaction.png" alt=""><br>这种做法改善了读的性能，避免了读放大（<strong>Read Amplifiation</strong>）的情况出现，但是会导致写放大（<strong>Write Amplification</strong>）,写的时候 IO 会有一定的压力。一般低峰的时候才会进行 Major Compaction。</li>
+</ol>
+<h2 id="Region-的拆分"><a href="#Region-的拆分" class="headerlink" title="Region 的拆分"></a>Region 的拆分</h2><p><img src="/2017/04/13/初涉HBase/regionsplit1.png" alt=""></p>
+<ul>
+<li>一个 Region Server 包含大约1000个 Region（可能属于同一个或者不同的 tables）；</li>
+<li>Region 用来响应客户端响应，每个 Region 默认1GB；</li>
+<li>一个 Table 可以拆分到一个或者多个 Region 之中；</li>
+<li>一个 Region 包含一个介于开始的 key 和结束的key 之间的，毗邻的有序的行（Row）数据的范围。<br><img src="/2017/04/13/初涉HBase/regionsplit2.png" alt=""></li>
+<li>region 增长过大就会拆分成两个子 region，且子 region 同时被一个 region server 打开，然后将拆分信息上报给 HMaster</li>
+<li>从负载均衡的角度考虑，HMaster 可能会将新的 regions 分发给其他的服务器。<blockquote>
+<p><strong>Tips</strong>: HBase 默认给初始 table 以一个 region，数据量到一定程度才会自动拆分，这就会导致一个问题，如果存储少量的热数据在 HBase 里，会导致初始化后的一段时间内集群无法做到负载均衡，不能充分利用整个集群的资源；解决这个问题，只能是预先拆分（pre-split）</p>
+</blockquote>
+</li>
+</ul>
+<p>以下是当读过于频繁的时候，也会导致自动拆分，以做到读负载均衡<br><img src="/2017/04/13/初涉HBase/readlb.png" alt=""></p>
+<h2 id="Replication"><a href="#Replication" class="headerlink" title="Replication"></a>Replication</h2><p>那么 HBase 是如何从宕机中恢复数据呢？<br><img src="/2017/04/13/初涉HBase/replication3.png" alt=""><br><img src="/2017/04/13/初涉HBase/replication4.png" alt=""><br>ZK 临时节点消失就判断 RegionServer 已经挂了，这个时候 HMaster 重新指派 regions 到存活的 RegionServer 服务器上，然后拆分 WAL 成几个文件，并且将这几个文件存储在新的 RegionServers 中，这些被分发到的 RegionServers 将会对 WAL files 进行 replay。至此，恢复完毕！</p>
+<p>但有一点不解，这里说 HMaster 会将崩溃的 WAL 日志拆分成多个文件传输到存活的 Regions Server之中，然后 replay it。<br>服务器如果断电崩溃，这样的 WAL 数据是怎么从宕机的服务器中传出来的？</p>
+<p>WAL 的写入过程中实际上是包含了 HDFS 的副本拷贝的，WAL 在整个集群里实际上是有副本的存在的，因此即使一台机器挂了，也不影响  HMaster 对宕机节点的 WAL 的获取。</p>
+<p><img src="/2017/04/13/初涉HBase/replication1.png" alt=""><br><img src="/2017/04/13/初涉HBase/replication2.png" alt=""><br>HBase 为 WAL 以及 HFile 创建 HDFS 副本</p>
+<h2 id="HBase-表数据要注意的几点"><a href="#HBase-表数据要注意的几点" class="headerlink" title="HBase 表数据要注意的几点"></a>HBase 表数据要注意的几点</h2><ul>
+<li>HBase 只对 Row Key 索引，其余的单元数据的不做索引，因此 Row Key 如何命名很重要；</li>
+<li>实际生产有时需要对 Row Key 哈希化，使得 Row Key 长度一致，提高数据存储性能，但是牺牲了排序能力；</li>
+<li>HBase 表比关系型数据更加灵活，可以存储任何二进制数据在表中，无关数据类型；</li>
+<li>HBase 只支持行内的原子性保证，因此，横向扩张（动态增加列标识）的表能保持一定的原子性，纵向扩张（同表中多种数据单元共存的设计）能快速简单获取数据，牺牲一定原子性；</li>
+<li>HBase 不支持事务；</li>
+<li>可以利用列标识来存储数据，例如可以将 A 用户的关注者放到一个 Column Families 中维护，每新增一个关注者就添加一个列标识（Column Qualify）;</li>
+<li>列标识命名长度和列族名字长度都会影响 IO 读写性能，因此应该命名越简洁越好！</li>
+</ul>
+<p><strong>推荐阅读：</strong></p>
+<ul>
+<li><a href="https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko" target="_blank" rel="external">https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko</a></li>
+<li><a href="https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/" target="_blank" rel="external">https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/</a></li>
+<li><a href="http://hbasefly.com/" target="_blank" rel="external">http://hbasefly.com/</a></li>
+<li><a href="http://hbase.apache.org/book.html#_preface" target="_blank" rel="external">http://hbase.apache.org/book.html#_preface</a></li>
+</ul>
+
+        </div>
+        <footer class="article-footer">
+            
+
+
+
+    <a data-url="https://leonlibraries.github.io/2017/04/13/初涉HBase/" data-id="cj1g0bni3000bac67j06iko03" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="twitter" href="/" target="_blank">
+                        <i class="icon fa fa-twitter"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="facebook" href="/" target="_blank">
+                        <i class="icon fa fa-facebook"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="google-plus" href="/" target="_blank">
+                        <i class="icon fa fa-google-plus"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/ppoffice/hexo-theme-hueman" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="weibo" href="/" target="_blank">
+                        <i class="icon fa fa-weibo"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/04/13/CDH安装运维小记/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">CDH安装运维小记</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/初涉HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/初涉HBase/datastructure1.jpg)" alt="初涉 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/初涉HBase/" class="title">初涉 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T07:56:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/CDH安装运维小记/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/CDH安装运维小记/deploy.jpeg)" alt="CDH安装运维小记" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/CDH安装运维小记/" class="title">CDH安装运维小记</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/02/27/Lucene学习笔记一（附源码分析）/full-text-searching.jpg)" alt="Lucene 学习笔记一（附源码分析）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/全文搜索/">全文搜索</a></p>
+                            <p class="item-title"><a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="title">Lucene 学习笔记一（附源码分析）</a></p>
+                            <p class="item-date"><time datetime="2017-02-27T02:27:15.000Z" itemprop="datePublished">2017-02-27</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/13/摸清Java并发安全的套路/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/13/摸清Java并发安全的套路/multi.jpg)" alt="摸清Java并发安全的套路" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/13/摸清Java并发安全的套路/" class="title">摸清Java并发安全的套路</a></p>
+                            <p class="item-date"><time datetime="2016-06-13T02:02:53.000Z" itemprop="datePublished">2016-06-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/10/Java线程同步策略/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/10/Java线程同步策略/multithread.png)" alt="Java线程同步策略" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/10/Java线程同步策略/" class="title">Java线程同步策略</a></p>
+                            <p class="item-date"><time datetime="2016-06-10T12:48:25.000Z" itemprop="datePublished">2016-06-10</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 16.67px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 13.33px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 13.33px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 13.33px;">JVM</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/大数据/" style="font-size: 13.33px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 13.33px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/13/初涉HBase/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
