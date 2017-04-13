@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>面向接口编程与策略模式 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="面向对象,代码设计" />
+    
+    <meta name="description" content="面向接口编程 &amp;amp; 面向对象编程
+Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面向接口编程与策略模式">
+<meta property="og:url" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="面向接口编程 &amp;amp; 面向对象编程
+Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
+<meta property="og:image" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/oop.jpg">
+<meta property="og:updated_time" content="2017-01-24T08:30:55.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面向接口编程与策略模式">
+<meta name="twitter:description" content="面向接口编程 &amp;amp; 面向对象编程
+Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/oop.jpg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/代码设计/">代码设计</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-面向接口编程与策略模式" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        面向接口编程与策略模式
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-subtitle">
+                <a href="/2016/03/29/面向接口编程与策略模式/" class="article-date">
+    <time datetime="2016-03-29T02:22:20.000Z" itemprop="datePublished">2016-03-29</time>
+</a>
+                
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/代码设计/">代码设计</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/面向对象/">面向对象</a></li></ul>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p><img src="/2016/03/29/面向接口编程与策略模式/oop.jpg" alt="面向对象" title="面向对象"></p>
+<h1 id="面向接口编程-amp-面向对象编程"><a href="#面向接口编程-amp-面向对象编程" class="headerlink" title="面向接口编程 &amp; 面向对象编程"></a>面向接口编程 &amp; 面向对象编程</h1><blockquote>
+<p>Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-oriented programming language which does not have a module system. （面向接口编程，也被熟知为基于接口的设计，是一种基于组件级别的，面向对象语言的模块化编程设计实现）</p>
+</blockquote>
+<p>面向接口编程和面向对象编程实际上是两个不同层级的概念。理论上说具有对象概念的程序设计都可以称之为面向对象编程，而面向接口编程则是从组件的级别来设计代码，人为地将抽象与实现分离。面向接口编程仅仅只是面向对象编程的一种模块化实现形式而已。</p>
+<h1 id="所谓“接口”"><a href="#所谓“接口”" class="headerlink" title="所谓“接口”"></a>所谓“接口”</h1><p>面向接口编程中的”接口”二字具体到语言中（Java）不仅仅是<code>interface</code>关键字这么简单。可以理解为接口是对具体实现的抽象。试想一下，团队协同以及代码健壮可维护性的需求日益增强的趋势下，通过暴露接口来提供服务本身是一件非常愉悦的事情。A需要调用B中的服务，A却不需要去仔细阅读B写的代码，通过接口文档就可以看出对应业务的方法和参数类型，进而使用RMI或者RPC等相关技术实现模块化调用。而这一切本身就是<strong>面向接口编程</strong>。</p>
+<h1 id="abstract-class-和-interface"><a href="#abstract-class-和-interface" class="headerlink" title="abstract class 和 interface"></a>abstract class 和 interface</h1><p>为什么有这样的问题呢？很多刚接触面向接口编程的Java开发者都或多或少遇到这样的困惑。他们大多会认为，既然是面向接口编程，那么把实现抽象为接口就是优良的设计。但实际上他们混淆了Java中的<code>interface</code>和面向接口编程中的“接口”概念。实际上，<code>interface</code>、<code>abstract class</code>以及普通的<code>class</code>都能成为所谓的接口，甚至<code>abstract class</code>的功能可以更加强大。那么问题来了，<code>interface</code>和<code>abstract class</code>分别对应于什么场景下使用更合适一些？<br><code>interface</code>和<code>abstract class</code>区别在于<code>interface</code>约定的是务必要实现的方法和参数，强调规则的制定；<code>abstract class</code>则在抽象的同时允许提供一些默认的行为，以达到代码复用的效果。例如定义一些基础、初始化以及类回收方法等。另外，还有一个常识性的区别，一个实现类（相对于抽象而言）可以实现多个<code>interface</code>，而只能继承一个<code>abstract class</code>，在代码设计的过程中务必注意。</p>
+<h1 id="策略模式-（Strategy-Pattern）"><a href="#策略模式-（Strategy-Pattern）" class="headerlink" title="策略模式 （Strategy Pattern）"></a>策略模式 （Strategy Pattern）</h1><p>作为面向接口编程的一个典型设计模式，应用相当普遍。本文之所以讨论策略模式，是该模式本身把“面向接口编程”思想很好地体现了。这里举个简单的例子以供参考。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//定义策略接口</span></div><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Strategy</span> </span>&#123; <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span></span>; &#125;</div><div class="line"><span class="comment">/**************   策略一   **************/</span></div><div class="line"><span class="comment">//策略1抽象类</span></div><div class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">TemplateMethod1</span> <span class="keyword">implements</span> <span class="title">Strategy</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span> </span>&#123;</div><div class="line">      start();</div><div class="line">      <span class="keyword">while</span> (nextTry() &amp;&amp; ! isSolution())</div><div class="line">         ;</div><div class="line">      stop();</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span>    <span class="title">start</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">nextTry</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">isSolution</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span>    <span class="title">stop</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"><span class="comment">//策略1实现类</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Impl1</span> <span class="keyword">extends</span> <span class="title">TemplateMethod1</span> </span>&#123;</div><div class="line">   <span class="keyword">private</span> <span class="keyword">int</span> state = <span class="number">1</span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</div><div class="line">     System.out.print( <span class="string">"start  "</span> );</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>&#123;</div><div class="line">     System.out.println( <span class="string">"stop"</span> );</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">nextTry</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"nextTry-"</span> + state++ + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">isSolution</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"isSolution-"</span> + (state == <span class="number">3</span>) + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> (state == <span class="number">3</span>);</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">/**************   策略二   **************/</span></div><div class="line"><span class="comment">//策略2抽象类</span></div><div class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">TemplateMethod2</span> <span class="keyword">implements</span> <span class="title">Strategy</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span> </span>&#123;                             </div><div class="line">      <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">         preProcess();</div><div class="line">         <span class="keyword">if</span> (search()) <span class="keyword">break</span>;</div><div class="line">         postProcess();</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">preProcess</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">search</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">postProcess</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"><span class="comment">//策略2实现类</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Impl2</span> <span class="keyword">extends</span> <span class="title">TemplateMethod2</span> </span>&#123;</div><div class="line">   <span class="keyword">private</span> <span class="keyword">int</span> state = <span class="number">1</span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span>    <span class="title">preProcess</span><span class="params">()</span>  </span>&#123; System.out.print( <span class="string">"preProcess  "</span> ); &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span>    <span class="title">postProcess</span><span class="params">()</span> </span>&#123; System.out.print( <span class="string">"postProcess  "</span> ); &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">search</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"search-"</span> + state++ + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> state == <span class="number">3</span> ? <span class="keyword">true</span> : <span class="keyword">false</span>;</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**************   测试类   **************/</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StrategyDemo</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">clientCode</span><span class="params">( Strategy strat )</span> </span>&#123;</div><div class="line">     strat.solve();</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">( String[] args )</span> </span>&#123;</div><div class="line">      Strategy[] algorithms = &#123; <span class="keyword">new</span> Impl1(), <span class="keyword">new</span> Impl2() &#125;;</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; algorithms.length; i++) &#123;</div><div class="line">         clientCode( algorithms[i] );</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其中<code>interface</code>定义的是最抽象的东西，也就是上文说的规则，但是过度抽象不利于代码的复用。于是<code>abstract class</code>的优势就能很好的利用了。介于绝对抽象和具体实现之间，<code>abstract class</code>既能够实现接口方法，提供一个默认方法支持（所谓“策略”），又能制定出该策略下附带的某些必须实现的抽象方法（所谓“规则”），在<code>interface</code>和具体实现类之间起到了很好的过渡效果。</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+
+
+    <a data-url="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/" data-id="ciyb4f58t000njg67wh1phryd" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="twitter" href="/" target="_blank">
+                        <i class="icon fa fa-twitter"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="facebook" href="/" target="_blank">
+                        <i class="icon fa fa-facebook"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="google-plus" href="/" target="_blank">
+                        <i class="icon fa fa-google-plus"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/ppoffice/hexo-theme-hueman" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="weibo" href="/" target="_blank">
+                        <i class="icon fa fa-weibo"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2016/04/06/RelayReact数据驱动层初探/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            Relay | React数据驱动层初探
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2016/03/14/ECMAScript6直面Callback-Hell/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">ECMAScript6：直面Callback Hell</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/CDH安装运维小记/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/CDH安装运维小记/deploy.jpeg)" alt="CDH安装运维小记" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/CDH安装运维小记/" class="title">CDH安装运维小记</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/02/27/Lucene学习笔记一（附源码分析）/full-text-searching.jpg)" alt="Lucene 学习笔记一（附源码分析）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/全文搜索/">全文搜索</a></p>
+                            <p class="item-title"><a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="title">Lucene 学习笔记一（附源码分析）</a></p>
+                            <p class="item-date"><time datetime="2017-02-27T02:27:15.000Z" itemprop="datePublished">2017-02-27</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/13/摸清Java并发安全的套路/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/13/摸清Java并发安全的套路/multi.jpg)" alt="摸清Java并发安全的套路" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/13/摸清Java并发安全的套路/" class="title">摸清Java并发安全的套路</a></p>
+                            <p class="item-date"><time datetime="2016-06-13T02:02:53.000Z" itemprop="datePublished">2016-06-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/10/Java线程同步策略/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/10/Java线程同步策略/multithread.png)" alt="Java线程同步策略" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/10/Java线程同步策略/" class="title">Java线程同步策略</a></p>
+                            <p class="item-date"><time datetime="2016-06-10T12:48:25.000Z" itemprop="datePublished">2016-06-10</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/04/06/RelayReact数据驱动层初探/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/04/06/RelayReact数据驱动层初探/roger-stack.png)" alt="Relay | React数据驱动层初探" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/前端那些事儿/">前端那些事儿</a></p>
+                            <p class="item-title"><a href="/2016/04/06/RelayReact数据驱动层初探/" class="title">Relay | React数据驱动层初探</a></p>
+                            <p class="item-date"><time datetime="2016-04-06T03:01:31.000Z" itemprop="datePublished">2016-04-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 16.67px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 10px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 10px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 13.33px;">JVM</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/大数据/" style="font-size: 10px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 13.33px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>CDH安装运维小记 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="大数据,架构,CDH,Hadoop,HBase" />
+    
+    <meta name="description" content="CDH安装运维小记理想中的部署蓝图
+Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CDH安装运维小记">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="CDH安装运维小记理想中的部署蓝图
+Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/deploy.jpeg">
+<meta property="og:updated_time" content="2017-04-13T02:44:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CDH安装运维小记">
+<meta name="twitter:description" content="CDH安装运维小记理想中的部署蓝图
+Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/deploy.jpeg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-CDH安装运维小记" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        CDH安装运维小记
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-subtitle">
+                <a href="/2017/04/13/CDH安装运维小记/" class="article-date">
+    <time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time>
+</a>
+                
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CDH/">CDH</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HBase/">HBase</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Hadoop/">Hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/大数据/">大数据</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/架构/">架构</a></li></ul>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="CDH安装运维小记"><a href="#CDH安装运维小记" class="headerlink" title="CDH安装运维小记"></a>CDH安装运维小记</h1><h3 id="理想中的部署蓝图"><a href="#理想中的部署蓝图" class="headerlink" title="理想中的部署蓝图"></a>理想中的部署蓝图</h3><p><img src="/2017/04/13/CDH安装运维小记/deploy.jpeg" alt="Deploy"></p>
+<h3 id="Hosts-文件"><a href="#Hosts-文件" class="headerlink" title="Hosts 文件"></a>Hosts 文件</h3><p>这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。</p>
+<p>我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示<br><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.100</span> CDHt<span class="number">-240</span><span class="number">-100</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.101</span> CDHt<span class="number">-240</span><span class="number">-101</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.102</span> CDHt<span class="number">-240</span><span class="number">-102</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.103</span> CDHt<span class="number">-240</span><span class="number">-103</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.104</span> CDHt<span class="number">-240</span><span class="number">-104</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.105</span> CDHt<span class="number">-240</span><span class="number">-105</span></div></pre></td></tr></table></figure></p>
+<p>也需要将上面的代码段植入到<strong>每台服务器</strong>的/etc/hosts文件中</p>
+<h3 id="Build-Local-Yum-Repository"><a href="#Build-Local-Yum-Repository" class="headerlink" title="Build Local Yum Repository"></a>Build Local Yum Repository</h3><p>如果网络不好的，建议在本地配置好 yum 源，参考文档 <a href="https://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_yumrepo_local_create.html" target="_blank" rel="external">https://www.cloudera.com/documentation/enterprise/latest/topics/cdh_ig_yumrepo_local_create.html</a><br>里边包含了 Hadoop 相关的所有包，然而后续我打算用 Parcels 安装，因此这里的包并非全部用得上。但是我们可以丰富这里的包，因为在安装过程中有些包的安装耗时是非常大的。这里把我知道的包列举出来，尽量不在网络传输的过程中浪费太多时间。</p>
+<p>我把 Yum 源配置在<code>CDHt-240-102</code>这台机子。接着 cloudera-manager-server 也要装在这台机子上。之后要用到 Parcels 安装，这种安装方式最大的好处就是一次下载多地安装，我们可以先这么干。<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">mkdir -p /opt/cloudera/parcel-repo</div><div class="line"><span class="built_in">cd</span> /opt/cloudera/parcel-repo</div><div class="line">wget https://archive.cloudera.com/cdh5/parcels/5.10/manifest.json</div><div class="line">wget https://archive.cloudera.com/cdh5/parcels/5.10/CDH-5.10.1-1.cdh5.10.1.p0.10-el6.parcel.sha1</div><div class="line">wget https://archive.cloudera.com/cdh5/parcels/5.10/CDH-5.10.1-1.cdh5.10.1.p0.10-el7.parcel</div><div class="line">mv CDH-5.10.1-1.cdh5.10.1.p0.10-el6.parcel.sha1 CDH-5.10.1-1.cdh5.10.1.p0.10-el6.parcel.sha</div></pre></td></tr></table></figure></p>
+<p>另外还有一些JDK安装包以及 cloudera-manager 安装组件，也可以先下载下来<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 这个地址是 lighttpd 的目录，上边有给出相关文档</span></div><div class="line"><span class="built_in">cd</span> /var/www/lighttpd/cdh/5/RPMS/x86_64</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/cloudera-manager-agent-5.10.1-1.cm5101.p0.6.el6.x86_64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/cloudera-manager-daemons-5.10.1-1.cm5101.p0.6.el6.x86_64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/cloudera-manager-server-5.10.1-1.cm5101.p0.6.el6.x86_64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/cloudera-manager-server-db-2-5.10.1-1.cm5101.p0.6.el6.x86_64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/enterprise-debuginfo-5.10.1-1.cm5101.p0.6.el6.x86_64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/jdk-6u31-linux-amd64.rpm</div><div class="line">wget https://archive.cloudera.com/cm5/redhat/6/x86_64/cm/5/RPMS/x86_64/oracle-j2sdk1.7-1.7.0+update67-1.x86_64.rpm</div></pre></td></tr></table></figure></p>
+<p>还有 MySQL 驱动包<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">wget https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-5.1.41.tar.gz</div><div class="line">tar zxvf mysql-connector-java-5.1.41.tar.gz</div><div class="line"></div><div class="line">sudo cp mysql-connector-java-5.1.41/mysql-connector-java-5.1.41-bin.jar /usr/share/java/mysql-connector-java.jar</div><div class="line"></div><div class="line"><span class="comment"># 这个地址是 lighttpd 对外界开通的网络目录，其他机器也是需要这个驱动包的</span></div><div class="line">sudo cp mysql-connector-java-5.1.41/mysql-connector-java-5.1.41-bin.jar /var/www/lighttpd/mysql/mysql-connector-java.jar</div></pre></td></tr></table></figure></p>
+<p>光是等待下载这些包就要花不少时间。<br>随后就可以将集群中所有机器的 yum 源配置一下，在<code>/etc/yum.repos.d</code>目录下创建文件<code>cloudera-cdh5-local.repo</code>，内容为<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">[cloudera-cdh5-local]</div><div class="line"># Packages for Cloudera&apos;s Distribution for Hadoop, Version 5, on RedHat or CentOS 6 x86_64</div><div class="line">name=Cloudera&apos;s Distribution for Hadoop, Version 5</div><div class="line">baseurl=http://192.168.240.102/cdh/5/</div><div class="line">gpgkey =https://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/RPM-GPG-KEY-cloudera</div><div class="line">gpgcheck = 1</div></pre></td></tr></table></figure></p>
+<p>Well done.</p>
+<h3 id="Install-MySQL-5-7"><a href="#Install-MySQL-5-7" class="headerlink" title="Install MySQL 5.7"></a>Install MySQL 5.7</h3><p>MySQL 我也部署在了<code>CDHt-240-102</code>上，具体部署过程参考<br><a href="https://dev.mysql.com/doc/mysql-yum-repo-quick-guide/en/" target="_blank" rel="external">https://dev.mysql.com/doc/mysql-yum-repo-quick-guide/en/</a></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">wget https://repo.mysql.com//mysql57-community-release-el6-10.noarch.rpm</div><div class="line">sudo rpm -Uvh mysql57-community-release-el6-10.noarch.rpm</div><div class="line"></div><div class="line">yum repolist enabled | grep mysql</div><div class="line">sudo yum install mysql-community-server</div><div class="line"></div><div class="line">sudo service mysqld start</div></pre></td></tr></table></figure>
+<p>5.7版本 MySQL 加强了密码安全机制，root 初始化密码很复杂，通常在 mysql 的启动日志里有，如果日志被清理了那就得参考这个文档了<br><a href="https://dev.mysql.com/doc/refman/5.7/en/resetting-permissions.html" target="_blank" rel="external">https://dev.mysql.com/doc/refman/5.7/en/resetting-permissions.html</a></p>
+<p>安装完，确保 root 用户可用后，需要根据文档预先创建一些库，且配置好 MySQL 相关配置项及驱动，参考如下<br><a href="https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_installing_configuring_dbs.html#cmig_topic_5" target="_blank" rel="external">https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_installing_configuring_dbs.html#cmig_topic_5</a><br><a href="https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_mysql.html#id_ijy_cwt_g5" target="_blank" rel="external">https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_mysql.html#id_ijy_cwt_g5</a></p>
+<p>至此，准备工作才算基本做完。</p>
+<h3 id="Cloudera-Manager-Server-amp-Cloudera-Manager-Agent"><a href="#Cloudera-Manager-Server-amp-Cloudera-Manager-Agent" class="headerlink" title="Cloudera Manager Server &amp; Cloudera Manager Agent"></a>Cloudera Manager Server &amp; Cloudera Manager Agent</h3><p>真正的安装步骤现在才开始，请参考这篇官方说明，一步一步走<br><a href="https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_install_path_b.html#cmig_topic_6_6_3" target="_blank" rel="external">https://www.cloudera.com/documentation/enterprise/latest/topics/cm_ig_install_path_b.html#cmig_topic_6_6_3</a><br>会发现有了上面的准备过程后，接下来的安装都非常顺利和迅速。</p>
+<p>Cloudera Manager Server 安装完后就可以进入管理界面，默认端口7180</p>
+<p>这个时候可以让所有机器执行如下脚本：<br><figure class="highlight crystal"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#!/bin/sh</span></div><div class="line"></div><div class="line">useradd cloudera-scm</div><div class="line"></div><div class="line"><span class="comment"># usermod -a -G sudo cloudera-scm</span></div><div class="line"></div><div class="line">sudo mkdir -p /var/<span class="class"><span class="keyword">lib</span>/<span class="title">hadoop</span>-<span class="title">httpfs</span></span></div><div class="line">sudo mkdir -p /var/<span class="class"><span class="keyword">lib</span>/<span class="title">oozie</span></span></div><div class="line">sudo mkdir -p /var/<span class="class"><span class="keyword">lib</span>/<span class="title">sqoop2</span></span></div><div class="line">sudo mkdir -p /var/<span class="class"><span class="keyword">lib</span>/<span class="title">solr</span></span></div><div class="line">sudo mkdir -p /var/data</div><div class="line">sudo mkdir -p /cm</div><div class="line">sudo mkdir -p /cm/var/log/zookeeper/</div><div class="line">sudo mkdir -p /cm/var/<span class="class"><span class="keyword">lib</span>/<span class="title">zookeeper</span>/<span class="title">version</span>-2</span></div><div class="line">sudo mkdir -p /cm/var/log/hadoop-hdfs/</div><div class="line"></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /var/<span class="class"><span class="keyword">lib</span>/<span class="title">hadoop</span>-<span class="title">httpfs</span></span></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /var/<span class="class"><span class="keyword">lib</span>/<span class="title">oozie</span></span></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /var/<span class="class"><span class="keyword">lib</span>/<span class="title">sqoop2</span></span></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /var/<span class="class"><span class="keyword">lib</span>/<span class="title">solr</span></span></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /var/data</div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /cm</div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /cm/var/log/zookeeper/</div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /cm/var/<span class="class"><span class="keyword">lib</span>/<span class="title">zookeeper</span>/<span class="title">version</span>-2/</span></div><div class="line">sudo chown cloudera-<span class="symbol">scm:</span>cloudera-scm /cm/var/log/hadoop-hdfs/</div><div class="line"></div><div class="line">sudo chmod <span class="number">755</span> /var/<span class="class"><span class="keyword">lib</span>/<span class="title">hadoop</span>-<span class="title">httpfs</span></span></div><div class="line">sudo chmod <span class="number">755</span> /var/<span class="class"><span class="keyword">lib</span>/<span class="title">oozie</span></span></div><div class="line">sudo chmod <span class="number">755</span> /var/<span class="class"><span class="keyword">lib</span>/<span class="title">sqoop2</span></span></div><div class="line">sudo chmod <span class="number">755</span> /var/<span class="class"><span class="keyword">lib</span>/<span class="title">solr</span></span></div><div class="line">sudo chmod <span class="number">755</span> /var/data</div><div class="line">sudo chmod <span class="number">755</span> /cm</div><div class="line">sudo chmod <span class="number">755</span> /cm/var/log/zookeeper/</div><div class="line">sudo chmod <span class="number">755</span> /cm/var/<span class="class"><span class="keyword">lib</span>/<span class="title">zookeeper</span>/<span class="title">version</span>-2/</span></div><div class="line">sudo chmod <span class="number">755</span> /cm/var/log/hadoop-hdfs/</div><div class="line"></div><div class="line"><span class="comment"># touch /cm/var/lib/zookeeper/myid</span></div><div class="line"></div><div class="line">sed -i <span class="string">'$a\session		required	pam_limits.so'</span> /etc/pam.d/su</div><div class="line">sed -i <span class="string">'$a\%cloudera-scm ALL=(ALL) NOPASSWD: ALL'</span> /etc/sudoers</div><div class="line">sed -i <span class="string">'$a\vm.swappiness=10'</span> /etc/sysctl.conf</div><div class="line"></div><div class="line"><span class="comment"># echo never &gt; /sys/kernel/mm/transparent_hugepage/defrag 以禁用此设置，然后将同一命令添加到 /etc/rc.local</span></div><div class="line">echo never &gt; <span class="regexp">/sys/kernel</span><span class="regexp">/mm/transparent</span>_hugepage/defrag</div><div class="line">sed -i <span class="string">'$a\echo never &gt; /sys/kernel/mm/transparent_hugepage/defrag'</span> /etc/rc.local</div><div class="line"></div><div class="line"><span class="comment"># 我在内网配置了 mysql 驱动包的 HTTP 访问</span></div><div class="line">wget <span class="string">'http://192.168.240.102/mysql/mysql-connector-java.jar'</span></div><div class="line"></div><div class="line">cp mysql-connector-java.jar /usr/share/java/</div><div class="line">cp mysql-connector-java.jar /var/<span class="class"><span class="keyword">lib</span>/<span class="title">oozie</span>/</span></div><div class="line"></div><div class="line">rm -f mysql-connector-java.jar</div><div class="line"></div><div class="line">reboot</div></pre></td></tr></table></figure></p>
+<h3 id="单用户模式"><a href="#单用户模式" class="headerlink" title="单用户模式"></a>单用户模式</h3><p>执行完脚本自动重启，包括 MySQL 和 Cloudera Manager Server 也会自动重启回来，接来下就可以利用 Parcels 进行集群安装和部署了，当然这个过程是可视化的。<br>这里我使用的是单用户模式做集群部署的，也可以参考如下文档<a href="https://www.cloudera.com/documentation/enterprise/latest/topics/install_singleuser_reqts.html#concept_o5q_stg_2v，文档所涉及的上边的脚本有覆盖，因此不需要做相关动作了。" target="_blank" rel="external">https://www.cloudera.com/documentation/enterprise/latest/topics/install_singleuser_reqts.html#concept_o5q_stg_2v，文档所涉及的上边的脚本有覆盖，因此不需要做相关动作了。</a></p>
+<h3 id="安装过程遇到的问题"><a href="#安装过程遇到的问题" class="headerlink" title="安装过程遇到的问题"></a>安装过程遇到的问题</h3><p>单用户安装过程在最后一步启动 zookeeper 的时候，会报出一个错误<code>cloudera KeyError: &#39;getpwnam(): name not found: zookeeper&#39;</code>以至于后续组件无法初始化和启动。然而实际上在仪表盘上启动 zk 集群是能成功的，这就很纠结了。<br>这个报错的意思是 zookeeper 的初始化和安装过程需要一个叫「zookeeper」的用户去做，然而系统里找不到这个用户，然而我用的是单用户模式，理应这个用户只有可能是「cloudera-scm」，因此我暂时将其归结为一个 Bug。<br>我怎么去避开这个 Bug 呢？<br>其实很简单，先安装 zookeeper 集群，手动在仪表盘里启动集群，启动成功后，一步一步添加其他组件（HDFS、Hive、Spark、HBase、Yarn 等）集群搭建完成。就这么简单。</p>
+<p><img src="/2017/04/13/CDH安装运维小记/CDH.jpeg" alt="CDH"></p>
+<h3 id="通过-Parcels-升级组件"><a href="#通过-Parcels-升级组件" class="headerlink" title="通过 Parcels 升级组件"></a>通过 Parcels 升级组件</h3><p><img src="/2017/04/13/CDH安装运维小记/upgrade1.jpeg" alt="upgrade1"><br><img src="/2017/04/13/CDH安装运维小记/upgrade2.jpeg" alt="upgrade2"></p>
+<p>done.</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+
+
+    <a data-url="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/" data-id="cj1fsvt46000hzh67545i3s5b" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="twitter" href="/" target="_blank">
+                        <i class="icon fa fa-twitter"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="facebook" href="/" target="_blank">
+                        <i class="icon fa fa-facebook"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="google-plus" href="/" target="_blank">
+                        <i class="icon fa fa-google-plus"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/ppoffice/hexo-theme-hueman" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="weibo" href="/" target="_blank">
+                        <i class="icon fa fa-weibo"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">Lucene 学习笔记一（附源码分析）</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/CDH安装运维小记/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/CDH安装运维小记/deploy.jpeg)" alt="CDH安装运维小记" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/CDH安装运维小记/" class="title">CDH安装运维小记</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/02/27/Lucene学习笔记一（附源码分析）/full-text-searching.jpg)" alt="Lucene 学习笔记一（附源码分析）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/全文搜索/">全文搜索</a></p>
+                            <p class="item-title"><a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="title">Lucene 学习笔记一（附源码分析）</a></p>
+                            <p class="item-date"><time datetime="2017-02-27T02:27:15.000Z" itemprop="datePublished">2017-02-27</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/13/摸清Java并发安全的套路/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/13/摸清Java并发安全的套路/multi.jpg)" alt="摸清Java并发安全的套路" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/13/摸清Java并发安全的套路/" class="title">摸清Java并发安全的套路</a></p>
+                            <p class="item-date"><time datetime="2016-06-13T02:02:53.000Z" itemprop="datePublished">2016-06-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/10/Java线程同步策略/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/10/Java线程同步策略/multithread.png)" alt="Java线程同步策略" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/10/Java线程同步策略/" class="title">Java线程同步策略</a></p>
+                            <p class="item-date"><time datetime="2016-06-10T12:48:25.000Z" itemprop="datePublished">2016-06-10</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/04/06/RelayReact数据驱动层初探/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/04/06/RelayReact数据驱动层初探/roger-stack.png)" alt="Relay | React数据驱动层初探" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/前端那些事儿/">前端那些事儿</a></p>
+                            <p class="item-title"><a href="/2016/04/06/RelayReact数据驱动层初探/" class="title">Relay | React数据驱动层初探</a></p>
+                            <p class="item-date"><time datetime="2016-04-06T03:01:31.000Z" itemprop="datePublished">2016-04-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 16.67px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 10px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 10px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 13.33px;">JVM</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/大数据/" style="font-size: 10px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 13.33px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
