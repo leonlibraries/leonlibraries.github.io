@@ -8,23 +8,23 @@
     
         <meta name="keywords" content="大数据,架构,CDH,Hadoop,HBase" />
     
-    <meta name="description" content="CDH安装运维小记理想中的部署蓝图
+    <meta name="description" content="理想中的部署蓝图
 Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
-我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.240.103 C">
 <meta property="og:type" content="article">
 <meta property="og:title" content="CDH安装运维小记">
 <meta property="og:url" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/index.html">
 <meta property="og:site_name" content="茅屋为秋风所破歌">
-<meta property="og:description" content="CDH安装运维小记理想中的部署蓝图
+<meta property="og:description" content="理想中的部署蓝图
 Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
-我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.240.103 C">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/deploy.jpeg">
-<meta property="og:updated_time" content="2017-04-13T02:50:45.000Z">
+<meta property="og:updated_time" content="2017-04-13T03:07:21.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CDH安装运维小记">
-<meta name="twitter:description" content="CDH安装运维小记理想中的部署蓝图
+<meta name="twitter:description" content="理想中的部署蓝图
 Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
-我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.">
+我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.240.103 C">
 <meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/deploy.jpeg">
     
 
@@ -159,7 +159,7 @@ Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决�
         
         
         <div class="article-entry" itemprop="articleBody">
-            <h1 id="CDH安装运维小记"><a href="#CDH安装运维小记" class="headerlink" title="CDH安装运维小记"></a>CDH安装运维小记</h1><h3 id="理想中的部署蓝图"><a href="#理想中的部署蓝图" class="headerlink" title="理想中的部署蓝图"></a>理想中的部署蓝图</h3><p><img src="/2017/04/13/CDH安装运维小记/deploy.jpeg" alt="Deploy"></p>
+            <h3 id="理想中的部署蓝图"><a href="#理想中的部署蓝图" class="headerlink" title="理想中的部署蓝图"></a>理想中的部署蓝图</h3><p><img src="/2017/04/13/CDH安装运维小记/deploy.jpeg" alt="Deploy"></p>
 <h3 id="Hosts-文件"><a href="#Hosts-文件" class="headerlink" title="Hosts 文件"></a>Hosts 文件</h3><p>这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。</p>
 <p>我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示<br><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.100</span> CDHt<span class="number">-240</span><span class="number">-100</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.101</span> CDHt<span class="number">-240</span><span class="number">-101</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.102</span> CDHt<span class="number">-240</span><span class="number">-102</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.103</span> CDHt<span class="number">-240</span><span class="number">-103</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.104</span> CDHt<span class="number">-240</span><span class="number">-104</span></div><div class="line"><span class="number">192.168</span><span class="number">.240</span><span class="number">.105</span> CDHt<span class="number">-240</span><span class="number">-105</span></div></pre></td></tr></table></figure></p>
 <p>也需要将上面的代码段植入到<strong>每台服务器</strong>的/etc/hosts文件中</p>
@@ -189,7 +189,7 @@ Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决�
 
 
 
-    <a data-url="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/" data-id="cj1ft5iy700008q672dmsiudu" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+    <a data-url="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/" data-id="cj1ftnz000000cj675abyaipi" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
 <script>
     (function ($) {
         $('body').on('click', function() {
