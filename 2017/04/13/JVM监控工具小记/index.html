@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>JVM 监控工具小记 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="JVM,Java,监控" />
+    
+    <meta name="description" content="jps （JVM 进程状态工具）1jps -lv
+通常这样就可以大致看清楚 JVM 应用的基本概况
+
+-l : 输出main类或Jar的全名
+-v : 输出携带的 JVM 参数
+-m : 输出传入 main 方法的参数
+-q : 静默模式，只输出进程号
+
+jstack （查看 JVM 线程堆栈信息）123456789101112131415Usage:    jstack [-l] &amp;lt;pi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM 监控工具小记">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/13/JVM监控工具小记/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="jps （JVM 进程状态工具）1jps -lv
+通常这样就可以大致看清楚 JVM 应用的基本概况
+
+-l : 输出main类或Jar的全名
+-v : 输出携带的 JVM 参数
+-m : 输出传入 main 方法的参数
+-q : 静默模式，只输出进程号
+
+jstack （查看 JVM 线程堆栈信息）123456789101112131415Usage:    jstack [-l] &amp;lt;pi">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/JVM监控工具小记/apm.jpeg">
+<meta property="og:updated_time" content="2017-04-14T03:57:32.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM 监控工具小记">
+<meta name="twitter:description" content="jps （JVM 进程状态工具）1jps -lv
+通常这样就可以大致看清楚 JVM 应用的基本概况
+
+-l : 输出main类或Jar的全名
+-v : 输出携带的 JVM 参数
+-m : 输出传入 main 方法的参数
+-q : 静默模式，只输出进程号
+
+jstack （查看 JVM 线程堆栈信息）123456789101112131415Usage:    jstack [-l] &amp;lt;pi">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/13/JVM监控工具小记/apm.jpeg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/APM/">APM</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-JVM监控工具小记" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        JVM 监控工具小记
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-subtitle">
+                <a href="/2017/04/13/JVM监控工具小记/" class="article-date">
+    <time datetime="2017-04-13T07:56:15.000Z" itemprop="datePublished">2017-04-13</time>
+</a>
+                
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JVM/">JVM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/监控/">监控</a></li></ul>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p><img src="/2017/04/13/JVM监控工具小记/apm.jpeg" alt=""></p>
+<h2 id="jps-（JVM-进程状态工具）"><a href="#jps-（JVM-进程状态工具）" class="headerlink" title="jps （JVM 进程状态工具）"></a>jps （JVM 进程状态工具）</h2><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jps -lv</div></pre></td></tr></table></figure>
+<p>通常这样就可以大致看清楚 JVM 应用的基本概况</p>
+<ul>
+<li>-l : 输出main类或Jar的全名</li>
+<li>-v : 输出携带的 JVM 参数</li>
+<li>-m : 输出传入 main 方法的参数</li>
+<li>-q : 静默模式，只输出进程号</li>
+</ul>
+<h2 id="jstack-（查看-JVM-线程堆栈信息）"><a href="#jstack-（查看-JVM-线程堆栈信息）" class="headerlink" title="jstack （查看 JVM 线程堆栈信息）"></a>jstack （查看 JVM 线程堆栈信息）</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">Usage:</div><div class="line">    jstack [-l] &lt;pid&gt;</div><div class="line">        (to connect to running process)</div><div class="line">    jstack -F [-m] [-l] &lt;pid&gt;</div><div class="line">        (to connect to a hung process)</div><div class="line">    jstack [-m] [-l] &lt;executable&gt; &lt;core&gt;</div><div class="line">        (to connect to a core file)</div><div class="line">    jstack [-m] [-l] [server_id@]&lt;remote server IP or hostname&gt;</div><div class="line">        (to connect to a remote debug server)</div><div class="line"></div><div class="line">Options:</div><div class="line">    -F  to force a thread dump. Use when jstack &lt;pid&gt; does not respond (process is hung)</div><div class="line">    -m  to print both java and native frames (mixed mode)</div><div class="line">    -l  long listing. Prints additional information about locks</div><div class="line">    -h or -help to print this help message</div></pre></td></tr></table></figure>
+<p>我们来试图定位一个 JVM 进程中某个线程的信息情况，可以这么玩：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jps -lv</div></pre></td></tr></table></figure></p>
+<p>找到我的应用进程<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">90147 KafkaService-1.3.jar</div></pre></td></tr></table></figure></p>
+<p>根据进程号，分析进程中线程的资源占用情况<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">[appadm@abcacb ~]$ top -Hp 90147</div><div class="line">top - 09:55:31 up 124 days,  9:02,  2 users,  load average: 0.00, 0.00, 0.00</div><div class="line">Tasks: 237 total,   0 running, 237 sleeping,   0 stopped,   0 zombie</div><div class="line">Cpu(s):  0.2%us,  0.1%sy,  0.0%ni, 99.7%id,  0.1%wa,  0.0%hi,  0.0%si,  0.0%st</div><div class="line">Mem:   8017400k total,  7170424k used,   846976k free,   162736k buffers</div><div class="line">Swap:  4063224k total,   383048k used,  3680176k free,  1130284k cached</div><div class="line"></div><div class="line">   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND</div><div class="line"> 90147 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.00 java</div><div class="line"> 90148 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:07.09 java</div><div class="line"> 90149 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:07.34 java</div><div class="line"> 90150 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:06.81 java</div><div class="line"> 90151 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:07.03 java</div><div class="line"> 90152 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:06.91 java</div><div class="line"> 90153 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:10.42 java</div><div class="line"> 90154 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.20 java</div><div class="line"> 90155 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.30 java</div><div class="line"> 90156 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.00 java</div><div class="line"> 90157 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:11.09 java</div><div class="line"> 90158 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:10.63 java</div><div class="line"> 90159 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.00 java</div><div class="line"> 90160 appadm    20   0 4545m 254m 6104 S  0.0  3.3  14:59.61 java</div><div class="line"> 90171 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:10.01 java</div><div class="line"> 90172 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:05.77 java</div><div class="line"> 90173 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:37.43 java</div><div class="line"> 90175 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:27.36 java</div><div class="line"> 90181 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:51.68 java</div><div class="line"> 90182 appadm    20   0 4545m 254m 6104 S  0.0  3.3   2:06.57 java</div><div class="line"> 90183 appadm    20   0 4545m 254m 6104 S  0.0  3.3   2:15.84 java</div><div class="line"> 90184 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:59.09 java</div><div class="line"> 90185 appadm    20   0 4545m 254m 6104 S  0.0  3.3   1:41.50 java</div><div class="line"> 90186 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:00.02 java</div><div class="line"> 90187 appadm    20   0 4545m 254m 6104 S  0.0  3.3   0:06.92 java</div></pre></td></tr></table></figure></p>
+<p>可以发现有一个线程存活的时间非常长<br><figure class="highlight basic"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="symbol">90160 </span>appadm    <span class="number">20</span>   <span class="number">0</span> <span class="number">4545</span>m <span class="number">254</span>m <span class="number">6104</span> S  <span class="number">0.0</span>  <span class="number">3.3</span>  <span class="number">14</span>:<span class="number">59.61</span> java</div></pre></td></tr></table></figure></p>
+<p>将其线程号转化成16进制<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ <span class="built_in">printf</span> <span class="string">'%x\n'</span> 90160</div><div class="line">16030</div></pre></td></tr></table></figure></p>
+<p>通过 jstack 命令查到对应线程的堆栈</p>
+<figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ jstack <span class="number">90147</span> | grep <span class="number">16030</span></div><div class="line"><span class="string">"VM Periodic Task Thread"</span> prio=<span class="number">10</span> tid=<span class="number">0x00007ff094168800</span> nid=<span class="number">0x16030</span> waiting on condition</div></pre></td></tr></table></figure>
+<h2 id="jmap（堆内存审查工具）"><a href="#jmap（堆内存审查工具）" class="headerlink" title="jmap（堆内存审查工具）"></a>jmap（堆内存审查工具）</h2><p>jmap 用于查看堆内存使用状况，以下介绍 jmap 用法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">Usage:</div><div class="line">    jmap [option] &lt;pid&gt;</div><div class="line">        (to connect to running process)</div><div class="line">    jmap [option] &lt;executable &lt;core&gt;</div><div class="line">        (to connect to a core file)</div><div class="line">    jmap [option] [server_id@]&lt;remote server IP or hostname&gt;</div><div class="line">        (to connect to remote debug server)</div><div class="line"></div><div class="line">where &lt;option&gt; is one of:</div><div class="line">    &lt;none&gt;               to print same info as Solaris pmap</div><div class="line">    -heap                to print java heap summary</div><div class="line">    -histo[:live]        to print histogram of java object heap; if the &quot;live&quot;</div><div class="line">                         suboption is specified, only count live objects</div><div class="line">    -permstat            to print permanent generation statistics</div><div class="line">    -finalizerinfo       to print information on objects awaiting finalization</div><div class="line">    -dump:&lt;dump-options&gt; to dump java heap in hprof binary format</div><div class="line">                         dump-options:</div><div class="line">                           live         dump only live objects; if not specified,</div><div class="line">                                        all objects in the heap are dumped.</div><div class="line">                           format=b     binary format</div><div class="line">                           file=&lt;file&gt;  dump heap to &lt;file&gt;</div><div class="line">                         Example: jmap -dump:live,format=b,file=heap.bin &lt;pid&gt;</div><div class="line">    -F                   force. Use with -dump:&lt;dump-options&gt; &lt;pid&gt; or -histo</div><div class="line">                         to force a heap dump or histogram when &lt;pid&gt; does not</div><div class="line">                         respond. The &quot;live&quot; suboption is not supported</div><div class="line">                         in this mode.</div><div class="line">    -h | -help           to print this help message</div><div class="line">    -J&lt;flag&gt;             to pass &lt;flag&gt; directly to the runtime system</div></pre></td></tr></table></figure>
+<p>继续刚才那个进程<code>90147</code><br>永久代对象信息统计，包含对象的类加载器、地址、对象占用内存大小、是否存活等等信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ jmap -permstat 90147|more</div><div class="line">Attaching to process ID 90147, please wait...</div><div class="line">Debugger attached successfully.</div><div class="line">Server compiler detected.</div><div class="line">JVM version is 24.79-b02</div><div class="line">finding class loader instances ..done.</div><div class="line">computing per loader stat ..done.</div><div class="line">please wait.. computing liveness.liveness analysis may be inaccurate ...</div><div class="line">class_loader	classes	bytes	parent_loader	alive?	type</div><div class="line"></div><div class="line">&lt;bootstrap&gt;	2015	11213792	  null  	live	&lt;internal&gt;</div><div class="line">0x0000000086458398	0	0	0x0000000085c2e558	dead	org/springframework/data/convert/ClassGeneratingEntityInstantiator$ObjectInstantiatorClassGenerator$ByteArray</div><div class="line">ClassLoader@0x00000000826409a8</div><div class="line">0x0000000085e12220	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086096420	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000860960a0	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086759478	1	3064	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086669638	1	1888	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e12260	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000867594b8	1	1912	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085c0d2b8	1	1888	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e122a0	1	3032	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x000000008634e330	1	1912	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000867594f8	1	3048	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085c0d2f8	1	1888	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e122e0	1	3032	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e12320	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086759538	1	3064	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000867637e8	1	1912	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e12360	1	3032	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086759578	1	1888	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x000000008613b0a0	0	0	0x0000000085c2e558	dead	org/springframework/boot/context/embedded/tomcat/TomcatEmbeddedWebappClassLoader@0x000000008216e0f8</div><div class="line">0x0000000085e123a0	1	3064	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085c2e558	5348	29902968	0x0000000085c1dec8	dead	org/springframework/boot/loader/LaunchedURLClassLoader@0x0000000080aa0010</div><div class="line">0x00000000867595b8	1	3168	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000860b2580	1	1888	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000085e123e0	1	3072	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086097ea0	1	3072	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000867595f8	1	3048	  null  	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x00000000860ad318	1	1888	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">0x0000000086759678	1	3048	0x0000000085c2e558	dead	sun/reflect/DelegatingClassLoader@0x0000000080850b58</div><div class="line">--More--</div></pre></td></tr></table></figure></p>
+<p>堆内存使用状况审查，包含 GC 算法、堆配置、以及新生代、老年代和永久代的内存占用情况<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ jmap -heap 90147</div><div class="line">Attaching to process ID 90147, please wait...</div><div class="line">Debugger attached successfully.</div><div class="line">Server compiler detected.</div><div class="line">JVM version is 24.79-b02</div><div class="line"></div><div class="line">using thread-local object allocation.</div><div class="line">Parallel GC with 4 thread(s)</div><div class="line"></div><div class="line">Heap Configuration:</div><div class="line">   M<span class="keyword">in</span>HeapFreeRatio = 0</div><div class="line">   MaxHeapFreeRatio = 100</div><div class="line">   MaxHeapSize      = 2053111808 (1958.0MB)</div><div class="line">   NewSize          = 1310720 (1.25MB)</div><div class="line">   MaxNewSize       = 17592186044415 MB</div><div class="line">   OldSize          = 5439488 (5.1875MB)</div><div class="line">   NewRatio         = 2</div><div class="line">   SurvivorRatio    = 8</div><div class="line">   PermSize         = 21757952 (20.75MB)</div><div class="line">   MaxPermSize      = 85983232 (82.0MB)</div><div class="line">   G1HeapRegionSize = 0 (0.0MB)</div><div class="line"></div><div class="line">Heap Usage:</div><div class="line">PS Young Generation</div><div class="line">Eden Space:</div><div class="line">   capacity = 23592960 (22.5MB)</div><div class="line">   used     = 2480648 (2.3657302856445312MB)</div><div class="line">   free     = 21112312 (20.13426971435547MB)</div><div class="line">   10.514356825086805% used</div><div class="line">From Space:</div><div class="line">   capacity = 1048576 (1.0MB)</div><div class="line">   used     = 515424 (0.491546630859375MB)</div><div class="line">   free     = 533152 (0.508453369140625MB)</div><div class="line">   49.1546630859375% used</div><div class="line">To Space:</div><div class="line">   capacity = 1048576 (1.0MB)</div><div class="line">   used     = 0 (0.0MB)</div><div class="line">   free     = 1048576 (1.0MB)</div><div class="line">   0.0% used</div><div class="line">PS Old Generation</div><div class="line">   capacity = 47185920 (45.0MB)</div><div class="line">   used     = 32177488 (30.686843872070312MB)</div><div class="line">   free     = 15008432 (14.313156127929688MB)</div><div class="line">   68.19298638237848% used</div><div class="line">PS Perm Generation</div><div class="line">   capacity = 85983232 (82.0MB)</div><div class="line">   used     = 40674656 (38.790374755859375MB)</div><div class="line">   free     = 45308576 (43.209625244140625MB)</div><div class="line">   47.30533506812119% used</div><div class="line"></div><div class="line">15379 interned Strings occupying 2109944 bytes.</div></pre></td></tr></table></figure></p>
+<p>查看存活的对象在堆内存中的对象信息（对象实例数、大小、类名）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ jmap -histo:live 90147|more</div><div class="line"></div><div class="line"> num     #instances         #bytes  class name</div><div class="line">----------------------------------------------</div><div class="line">   1:         71828        9997912  &lt;constMethodKlass&gt;</div><div class="line">   2:         71828        9204032  &lt;methodKlass&gt;</div><div class="line">   3:          7004        7711224  &lt;constantPoolKlass&gt;</div><div class="line">   4:         40648        6815008  [C</div><div class="line">   5:          6999        4958288  &lt;instanceKlassKlass&gt;</div><div class="line">   6:          5660        4080704  &lt;constantPoolCacheKlass&gt;</div><div class="line">   7:         23229        2120696  [B</div><div class="line">   8:          3438        1643176  &lt;methodDataKlass&gt;</div><div class="line">   9:         39426         946224  java.lang.String</div><div class="line">  10:          7516         719768  java.lang.Class</div><div class="line">  11:         11584         585000  [[I</div><div class="line">  12:         10241         576304  [S</div><div class="line">  13:         15937         509984  java.util.concurrent.ConcurrentHashMap$HashEntry</div><div class="line">  14:         11697         467880  java.util.LinkedHashMap$Entry</div><div class="line">  15:          5662         452960  java.lang.reflect.Method</div><div class="line">  16:           629         329352  [I</div><div class="line">  17:          3982         319520  [Ljava.util.HashMap$Entry;</div><div class="line">  18:          9684         309888  java.util.HashMap$Entry</div><div class="line">  19:           500         272000  &lt;objArrayKlassKlass&gt;</div><div class="line">  20:          3988         223328  java.util.LinkedHashMap</div><div class="line">  21:          4459         208776  [Ljava.lang.Object;</div><div class="line">  22:         13045         208720  java.lang.Object</div><div class="line">  23:          1381         146992  [Ljava.util.concurrent.ConcurrentHashMap$HashEntry;</div><div class="line">  24:          2261          90440  java.lang.ref.SoftReference</div><div class="line">  25:          1869          89712  java.util.HashMap</div><div class="line">  26:          2324          74368  java.util.concurrent.locks.ReentrantLock$NonfairSync</div><div class="line">  27:          3047          73128  java.util.ArrayList</div><div class="line">  28:          1721          72120  [Ljava.lang.String;</div><div class="line">  29:           735          70560  org.springframework.beans.GenericTypeAwarePropertyDescriptor</div><div class="line">  30:          3351          67552  [Ljava.lang.Class;</div><div class="line">--More--</div></pre></td></tr></table></figure></p>
+<p>关于 class name 对象类型说明<br><figure class="highlight arduino"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">B  <span class="keyword">byte</span></div><div class="line">C  <span class="keyword">char</span></div><div class="line">D  <span class="keyword">double</span></div><div class="line">F  <span class="keyword">float</span></div><div class="line">I  <span class="keyword">int</span></div><div class="line">J  <span class="keyword">long</span></div><div class="line">Z  <span class="keyword">boolean</span></div><div class="line">[  数组，如[I表示<span class="keyword">int</span>[]</div><div class="line">[L+类名 其他对象</div></pre></td></tr></table></figure></p>
+<h2 id="jhat-堆内存可视化分析工具"><a href="#jhat-堆内存可视化分析工具" class="headerlink" title="jhat (堆内存可视化分析工具)"></a>jhat (堆内存可视化分析工具)</h2><p>jhat 是 jmap 的辅助工具，可以利用 jmap dump 出的数据文件做一个 web 端的可视化审查，我们先利用 jmap dump 出内存快照<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jmap -dump:format=b,file=/tmp/dump.dat 90147</div></pre></td></tr></table></figure></p>
+<p>然后利用 jhat 对 dump.dat 进行分析<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc ~]$ jhat -port 9998 /tmp/dump.dat</div><div class="line">Reading from /tmp/dump.dat...</div><div class="line">Dump file created Fri Apr 14 11:12:07 CST 2017</div><div class="line">Snapshot read, resolving...</div><div class="line">Resolving 355064 objects...</div><div class="line">WARNING:  Failed to resolve object id 0x86690ef8 for field clazz (signature L)</div><div class="line">WARNING:  Failed to resolve object id 0x86690718 for field clazz (signature L)</div><div class="line">WARNING:  Failed to resolve object id 0x86690248 for field clazz (signature L)</div><div class="line">WARNING:  Failed to resolve object id 0x863dada8 for field clazz (signature L)</div><div class="line">WARNING:  Failed to resolve object id 0x863da810 for field clazz (signature L)</div><div class="line">WARNING:  Failed to resolve object id 0x863da6d0 for field clazz (signature L)</div><div class="line">Chasing references, expect 71 dots.......................................................................</div><div class="line">Eliminating duplicate references.......................................................................</div><div class="line">Snapshot resolved.</div><div class="line">Started HTTP server on port 9998</div><div class="line">Server is ready.</div></pre></td></tr></table></figure></p>
+<p>这时候访问 <code>localhost:9998</code> 就可以看到<br><img src="/2017/04/13/JVM监控工具小记/jhat.jpeg" alt=""><br><img src="/2017/04/13/JVM监控工具小记/jhat2.jpeg" alt=""></p>
+<h2 id="jstat-（JVM-统计工具）"><a href="#jstat-（JVM-统计工具）" class="headerlink" title="jstat （JVM 统计工具）"></a>jstat （JVM 统计工具）</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">Usage: jstat -help|-options</div><div class="line">       jstat -&lt;option&gt; [-t] [-h&lt;lines&gt;] &lt;vmid&gt; [&lt;interval&gt; [&lt;count&gt;]]</div><div class="line"></div><div class="line">Definitions:</div><div class="line">  &lt;option&gt;      An option reported by the -options option</div><div class="line">  &lt;vmid&gt;        Virtual Machine Identifier. A vmid takes the following form:</div><div class="line">                     &lt;lvmid&gt;[@&lt;hostname&gt;[:&lt;port&gt;]]</div><div class="line">                Where &lt;lvmid&gt; is the local vm identifier for the target</div><div class="line">                Java virtual machine, typically a process id; &lt;hostname&gt; is</div><div class="line">                the name of the host running the target Java virtual machine;</div><div class="line">                and &lt;port&gt; is the port number for the rmiregistry on the</div><div class="line">                target host. See the jvmstat documentation for a more complete</div><div class="line">                description of the Virtual Machine Identifier.</div><div class="line">  &lt;lines&gt;       Number of samples between header lines.</div><div class="line">  &lt;interval&gt;    Sampling interval. The following forms are allowed:</div><div class="line">                    &lt;n&gt;[&quot;ms&quot;|&quot;s&quot;]</div><div class="line">                Where &lt;n&gt; is an integer and the suffix specifies the units as</div><div class="line">                milliseconds(&quot;ms&quot;) or seconds(&quot;s&quot;). The default units are &quot;ms&quot;.</div><div class="line">  &lt;count&gt;       Number of samples to take before terminating.</div><div class="line">  -J&lt;flag&gt;      Pass &lt;flag&gt; directly to the runtime system.</div></pre></td></tr></table></figure>
+<p>现在每隔 2.5s 打印一次 jvm 进程 GC 数据<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[appadm@abcabc tmp]$ jstat -gc 90147 2500</div><div class="line"> S0C    S1C    S0U    S1U      EC       EU        OC         OU       PC     PU    YGC     YGCT    FGC    FGCT     GCT</div><div class="line">1024.0 512.0   0.0   320.0  22016.0  20264.2   41472.0    14646.5   60416.0 39721.3   3635   27.576  10      1.063   28.639</div><div class="line">1024.0 512.0   0.0   320.0  22016.0  20375.0   41472.0    14646.5   60416.0 39721.3   3635   27.576  10      1.063   28.639</div><div class="line">1024.0 512.0   0.0   320.0  22016.0  20375.0   41472.0    14646.5   60416.0 39721.3   3635   27.576  10      1.063   28.639</div></pre></td></tr></table></figure></p>
+<p>现在解释一下这些是什么意思，先来看看 Java 内存模型<br><img src="/2017/04/13/JVM监控工具小记/jvmmemory.jpg" alt=""></p>
+<ul>
+<li>堆内存由 年轻代、老年代、永久代构成；</li>
+<li>年轻代分为 Eden 区和两个 Survivor 区（From&amp;To）</li>
+</ul>
+<p>jstat 各参数含义</p>
+<ul>
+<li>S0C、S1C、S0U、S1U：Survivor 0/1区容量（Capacity）和使用量（Used）</li>
+<li>EC、EU：Eden区容量和使用量</li>
+<li>OC、OU：年老代容量和使用量</li>
+<li>PC、PU：永久代容量和使用量</li>
+<li>YGC、YGT：年轻代GC次数和GC耗时</li>
+<li>FGC、FGCT：Full GC次数和Full GC耗时</li>
+<li>GCT：GC总耗时</li>
+</ul>
+<p>推荐阅读：</p>
+<ul>
+<li><a href="https://my.oschina.net/feichexia/blog/196575" target="_blank" rel="external">https://my.oschina.net/feichexia/blog/196575</a></li>
+</ul>
+
+        </div>
+        <footer class="article-footer">
+            
+
+
+
+    <a data-url="https://leonlibraries.github.io/2017/04/13/JVM监控工具小记/" data-id="cj1h6b0gq0004e2677h6w45ec" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="twitter" href="/" target="_blank">
+                        <i class="icon fa fa-twitter"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="facebook" href="/" target="_blank">
+                        <i class="icon fa fa-facebook"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="google-plus" href="/" target="_blank">
+                        <i class="icon fa fa-google-plus"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/ppoffice/hexo-theme-hueman" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="weibo" href="/" target="_blank">
+                        <i class="icon fa fa-weibo"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/04/13/初涉HBase/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">初涉 HBase</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/JVM监控工具小记/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/JVM监控工具小记/apm.jpeg)" alt="JVM 监控工具小记" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/APM/">APM</a></p>
+                            <p class="item-title"><a href="/2017/04/13/JVM监控工具小记/" class="title">JVM 监控工具小记</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T07:56:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/初涉HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/初涉HBase/datastructure1.jpg)" alt="初涉 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/初涉HBase/" class="title">初涉 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T07:56:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/13/CDH安装运维小记/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/13/CDH安装运维小记/deploy.jpeg)" alt="CDH安装运维小记" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/13/CDH安装运维小记/" class="title">CDH安装运维小记</a></p>
+                            <p class="item-date"><time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/02/27/Lucene学习笔记一（附源码分析）/full-text-searching.jpg)" alt="Lucene 学习笔记一（附源码分析）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/全文搜索/">全文搜索</a></p>
+                            <p class="item-title"><a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="title">Lucene 学习笔记一（附源码分析）</a></p>
+                            <p class="item-date"><time datetime="2017-02-27T02:27:15.000Z" itemprop="datePublished">2017-02-27</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2016/06/13/摸清Java并发安全的套路/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2016/06/13/摸清Java并发安全的套路/multi.jpg)" alt="摸清Java并发安全的套路" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></p>
+                            <p class="item-title"><a href="/2016/06/13/摸清Java并发安全的套路/" class="title">摸清Java并发安全的套路</a></p>
+                            <p class="item-date"><time datetime="2016-06-13T02:02:53.000Z" itemprop="datePublished">2016-06-13</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 16.67px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 13.33px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 13.33px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 16.67px;">JVM</a> <a href="/tags/Java/" style="font-size: 16.67px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/大数据/" style="font-size: 13.33px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 13.33px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/13/JVM监控工具小记/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
