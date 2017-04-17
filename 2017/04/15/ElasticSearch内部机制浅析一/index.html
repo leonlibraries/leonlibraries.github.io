@@ -3,18 +3,29 @@
 <head>
     <meta charset="utf-8">
     
-    <title>归档: 2016/4 | 茅屋为秋风所破歌</title>
+    <title>ElasticSearch 内部机制浅析（一） | 茅屋为秋风所破歌</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     
-    <meta name="description" content="Leon Wong&apos;s blogs">
-<meta property="og:type" content="website">
-<meta property="og:title" content="茅屋为秋风所破歌">
-<meta property="og:url" content="https://leonlibraries.github.io/archives/2016/04/index.html">
+        <meta name="keywords" content="大数据,Java,全文搜索" />
+    
+    <meta name="description" content="前言ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。
+节点类型
+Master Eligible Node （候选主节点）：设置成node.master=true (default)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ElasticSearch 内部机制浅析（一）">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/index.html">
 <meta property="og:site_name" content="茅屋为秋风所破歌">
-<meta property="og:description" content="Leon Wong&apos;s blogs">
+<meta property="og:description" content="前言ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。
+节点类型
+Master Eligible Node （候选主节点）：设置成node.master=true (default)">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/framework.jpg">
+<meta property="og:updated_time" content="2017-04-17T06:19:50.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="茅屋为秋风所破歌">
-<meta name="twitter:description" content="Leon Wong&apos;s blogs">
+<meta name="twitter:title" content="ElasticSearch 内部机制浅析（一）">
+<meta name="twitter:description" content="前言ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。
+节点类型
+Master Eligible Node （候选主节点）：设置成node.master=true (default)">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/framework.jpg">
     
 
     
@@ -119,74 +130,210 @@
                         <div class="main-body-header">
     <h1 class="header">
     
-    <i class="icon fa fa-archive"></i>归档: 2016/4
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
     </h1>
 </div>
                         <div class="main-body-content">
-                            
-
-    
-    
+                            <article id="post-ElasticSearch内部机制浅析一" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
         
-        
-        <section class="archives-wrap">
-            <div class="archive-year-wrap">
-                <a href="/archives/2016" class="archive-year"><i class="icon fa fa-calendar-o"></i>2016</a>
-            </div>
-            <div class="archives">
-    
-    
-    
-        <div class="article-row">
-    
-        <article class="article article-summary">
-    <div class="article-summary-inner">
-        
-        <a href="/2016/04/06/RelayReact数据驱动层初探/" class="thumbnail">
-    
-    
-        <span style="background-image:url(/2016/04/06/RelayReact数据驱动层初探/roger-stack.png)" alt="Relay | React数据驱动层初探" class="thumbnail-image"></span>
-    
-    
-        
-<span class="comment-counter">
-    <i class="fa fa-comments-o"></i>
-    
-        <span class="disqus-comment-count" data-disqus-identifier="" data-disqus-url="https://leonlibraries.github.io/2016/04/06/RelayReact数据驱动层初探/">0</span>
-    
-</span>
-
-    
-</a>
-
-        
-        <div class="article-meta">
-            <p class="category">
-            <a class="article-category-link" href="/categories/前端那些事儿/">前端那些事儿</a>
-            </p>
-            <p class="date"><time datetime="2016-04-06T03:01:31.000Z" itemprop="datePublished">2016-04-06</time></p>
-        </div>
-        
+            <header class="article-header">
+                
     
         <h1 class="article-title" itemprop="name">
-        <a href="/2016/04/06/RelayReact数据驱动层初探/">Relay | React数据驱动层初探</a>
+        ElasticSearch 内部机制浅析（一）
         </h1>
     
 
-        <p class="article-excerpt">
+            </header>
+        
+        
+            <div class="article-subtitle">
+                <a href="/2017/04/15/ElasticSearch内部机制浅析一/" class="article-date">
+    <time datetime="2017-04-15T04:00:15.000Z" itemprop="datePublished">2017-04-15</time>
+</a>
+                
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/全文搜索/">全文搜索</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/大数据/">大数据</a></li></ul>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。</p>
+<h2 id="节点类型"><a href="#节点类型" class="headerlink" title="节点类型"></a>节点类型</h2><ul>
+<li><strong>Master Eligible Node （候选主节点）</strong>：设置成<code>node.master=true (default)</code>都<strong>可能</strong>会被选举为主节点；</li>
+<li><strong>Master Node （主节点）</strong>：由候选主节点选举出来的，负责管理 ES 集群，通过广播的机制与其他节点维持关系，负责集群中的 DDL 操作（创建/删除索引），管理其他节点上的分片（shard）；<br>推荐配置<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">node</span>.master:<span class="title"> true</span></div><div class="line"><span class="keyword">node</span>.data:<span class="title"> false</span></div><div class="line"><span class="keyword">node</span>.ingest:<span class="title"> false</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+<blockquote>
+<p><strong>Tips</strong>: 关于 Master 脑裂问题。候选主节点之间出现了网络分区则可能会出现集群脑裂的情况，导致数据不一致或者数据丢失。我们可以通过设置<code>discovery.zen.minimum_master_nodes</code>设置为<code>(master_eligible_nodes / 2) + 1</code>将避免掉这个问题，弊端就是当候选主节点数由于宕机等不确定因素导致少于<code>(master_eligible_nodes / 2) + 1</code>的话，集群将无法正常运作下去</p>
+</blockquote>
+<ul>
+<li><p><strong>Data Node（数据节点）</strong>：很好理解，存放数据的节点，负责数据的增删改查 CRUD；<br>推荐配置</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">node</span>.master:<span class="title"> false</span></div><div class="line"><span class="keyword">node</span>.data:<span class="title"> true</span></div><div class="line"><span class="keyword">node</span>.ingest:<span class="title"> false</span></div></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Ingest Node（提取节点）</strong>：能执行预处理管道，有自己独立的任务要执行，类似于 logstash 的功能，不负责数据也不负责集群相关的事务；<br>推荐配置</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">node</span>.master:<span class="title"> false</span></div><div class="line"><span class="keyword">node</span>.data:<span class="title"> false</span></div><div class="line"><span class="keyword">node</span>.ingest:<span class="title"> true</span></div><div class="line">search.remote.connect: <span class="literal">false</span></div></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Tribe Node（部落节点）</strong>：协调集群与集群之间的节点，这里不做过多介绍；<br><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-tribe.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-tribe.html</a></p>
+</li>
+<li><strong>Coordinating Node(协调节点)</strong>：每一个节点都是一个潜在的协调节点，且不能被禁用，协调节点最大的作用就是将各个分片里的数据汇集起来一并返回给客户端，因此 ES 的节点需要有足够的 CPU 和内存去处理协调节点的 gather 阶段。</li>
+</ul>
+<h2 id="理解索引（index）"><a href="#理解索引（index）" class="headerlink" title="理解索引（index）"></a>理解索引（index）</h2><p>ElasticSearch 是基于 Apache Lucene 开发的，内部自然沿用的就是 Lucene 的倒排索引，关于倒排索引大致的逻辑模型可以参考如下：</p>
+<p>假设有两篇文档：<br><em>Doc1: Life goes on, impossible is nothing;</em><br><em>Doc2: Life is like a boat;</em><br>那么，索引的文件组织逻辑应该是这样的</p>
+<table>
+<thead>
+<tr>
+<th>词项</th>
+<th>文档ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>life</td>
+<td>Doc1,Doc2</td>
+</tr>
+<tr>
+<td>is</td>
+<td>Doc1,Doc2</td>
+</tr>
+<tr>
+<td>goes</td>
+<td>Doc1</td>
+</tr>
+<tr>
+<td>on</td>
+<td>Doc1</td>
+</tr>
+<tr>
+<td>like</td>
+<td>Doc2</td>
+</tr>
+<tr>
+<td>nothing</td>
+<td>Doc1</td>
+</tr>
+<tr>
+<td>impossible</td>
+<td>Doc1</td>
+</tr>
+<tr>
+<td>boat</td>
+<td>Doc2</td>
+</tr>
+</tbody>
+</table>
+<p>对倒排索引以及 Apache Lucene 机制理解了，ES 很多相关的东西很容易深入。</p>
+<h2 id="理解分片（shard）"><a href="#理解分片（shard）" class="headerlink" title="理解分片（shard）"></a>理解分片（shard）</h2><p><img src="/2017/04/15/ElasticSearch内部机制浅析一/framework.jpg" alt=""><br>Shard 是 ES 作为分布式存储的一个很重要的概念，ES 是通过 shard 来存储索引（index）的，ES 的 shard 区分为 primary shard 和 replica shard。</p>
+<ul>
+<li><p>primary shard: 每个主分片都有自己的序号，协调节点根据哈希算法将数据路由到对应的主分片上进行读写操作</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">shard = hash<span class="comment">(document_id or routing parameter)</span> <span class="meta">%</span> <span class="comment">(num_of_primary_shards)</span></div></pre></td></tr></table></figure>
+</li>
+<li><p>replica shard: 副本分片，是主分片的副本拷贝，系统默认副本策略为 Quorum，即写入超过半数副本就可以返回成功，这里后续对副本写入再做介绍。</p>
+</li>
+</ul>
+<h2 id="Zen-Discovery-amp-Gossip-算法"><a href="#Zen-Discovery-amp-Gossip-算法" class="headerlink" title="Zen Discovery &amp; Gossip 算法"></a>Zen Discovery &amp; Gossip 算法</h2><p>ES 的分布式是去中心化的，节点的发现是通过 Gossip 算法来做到的，而后选举节点，让各自节点承担不同角色。这里简单介绍一下 Gossip 算法，假设环境中有两个节点NodeA NodeB，Gossip 算法有三种同步数据的方式：</p>
+<p>① A push B 方式 : A 传 DigestA 给 B，B 接受后回传 DigestA-B 给 A，A  更新 A-B 的数据给 B<br>② A Pull B 方式：A 传 DigestA 给 B， B 接受后 更新  B-A 的数据给 A<br>③ A Pull-Push B 方式：A 传 DigestA 给 B，B 接受后 更新  B-A 的数据给 A 并附带 DigestA-B ，A  更新 A-B 的数据给 B</p>
+<p>一百个节点下，一个更新的数据传播结果收敛度如图所示<br><img src="/2017/04/15/ElasticSearch内部机制浅析一/gossip1.png" alt=""><br>其中可以看到 Pull-Push 的收敛度非常好，在第七次遍历的时候就可以完成100个节点的发现了，ES 正是借鉴了上面的算法实现节点发现（Zen Discovery）的。<br>由于算法的复杂度为 <code>Lg(N)</code>，那么当节点的数目越来越庞大的时候，其发现节点的性能损耗只是呈 <code>Lg(N)</code>递增，换句话说这个算法对节点数目量庞大的集群来说非常受用。</p>
+<p>另外关于集群自动发现，不得不提两个参数的区别<br><code>discovery.zen.fd.ping_timeout</code> 错误检测的超时，在稳定运行的集群环境之中，检测主机与主机之间是否通畅<br><code>discovery.zen.ping_timeout</code> 仅在选举主节点的时候，这个超时机制才起作用</p>
+<h2 id="写操作"><a href="#写操作" class="headerlink" title="写操作"></a>写操作</h2><p><img src="/2017/04/15/ElasticSearch内部机制浅析一/write1.jpg" alt=""><br>先不考虑副本（replicas），写操作的请求是首先发往协调节点（Coordinating Node），之前说协调节点可能是任何一个你所连上的一个节点，因此每个节点都有可能直接接受客户端的流量，这里相当于做了一次客户端的LB。协调节点根据对 document_id 的哈希计算并取余找到对应的主分片（primary shard）<br><figure class="highlight gcode"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">shard = hash<span class="comment">(document_id or routing parameter)</span> <span class="meta">%</span> <span class="comment">(num_of_primary_shards)</span></div></pre></td></tr></table></figure></p>
+<p>而主分片本身是分散在集群各个机器之中的，这里就相当于一次主分片的LB。<br><img src="/2017/04/15/ElasticSearch内部机制浅析一/write2.png" alt="注：图中加粗边框为主分片"><br>接下来都是在 shard 中进行操作了，先是写入 Transaction Log(后续会有详细介绍)，而后将数据写入内存中，默认情况下每隔一秒会同步到 FS cache 中，FS Cache 拥有文件句柄，因此存在于 FS cache 中的数据是允许被搜索到的（ready for search），这也是 ES 能够实现 NRT（Near-Real-Time）这个特性的原因之一。当然对数据实时性要求高的可以调用 <a href="https://www.elastic.co/guide/en/elasticsearch/guide/2.x/near-real-time.html#refresh-api" target="_blank" rel="external">Refresh API</a>。<br>默认情况下每隔30s 会将 FS cache中的 index 以及 Transaction Log 一并写入磁盘中，当然为了降低数据丢失的概率，可以将这个时间缩短，甚至设置成同步的形式。如果要直接刷盘，参考<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-flush.html" target="_blank" rel="external">Flush API</a></p>
+<h4 id="ES-如何写-replicas？"><a href="#ES-如何写-replicas？" class="headerlink" title="ES 如何写 replicas？"></a>ES 如何写 replicas？</h4><p>找到对应的 shard 之后，会预先检查 replicas 数量，开始写replicas，此时支持三种策略，<code>quorum</code>、<code>one</code>和 <code>all</code>，默认为 <code>quorum</code>（超过半数副本写入即可返回成功），对应参数 <code>wait_for_active_shards</code>。</p>
+<blockquote>
+<p><strong>Tips:</strong> 每一个  replicas shard 中的写逻辑是和 primary shard 一样的。</p>
+</blockquote>
+<h2 id="更新-amp-删除文档操作"><a href="#更新-amp-删除文档操作" class="headerlink" title="更新 &amp; 删除文档操作"></a>更新 &amp; 删除文档操作</h2><ul>
+<li>删除： 每个段中维护一个.del 文件，ES 只是逻辑删除文档，在.del 文件中标记为已删除，查询依然可以查到，但是会在结果中过滤掉；</li>
+<li>更新：引入版本的概念，旧版本的记录将在 .del 文件中标记为删除，新版本的文档将被索引到一个新段（Segement）。<br>后续会介绍 ES 的乐观并发控制实现。</li>
+</ul>
+<h2 id="读操作"><a href="#读操作" class="headerlink" title="读操作"></a>读操作</h2><p><img src="/2017/04/15/ElasticSearch内部机制浅析一/read1.jpg" alt=""><br>读分为两个阶段，查询阶段（Query Phrase）以及聚合提取阶段(Fetch Phrase)</p>
+<h4 id="查询阶段"><a href="#查询阶段" class="headerlink" title="查询阶段"></a>查询阶段</h4><p>协调节点接受到读请求，并将请求分配到相应的分片上（有可能是主分片或是副本分片，这个机制后续会提及），默认情况下，每个分片创建10个结果（仅包含 document_id 和 Scores）的优先级队列，并以相关性排序，返回给协调节点。</p>
+<blockquote>
+<p><strong>Tips</strong>:查询阶段如果不特殊指定，落入的分片有可能是 primary 也有可能是 replicas，这个根据协调节点的负载均衡算法来确定。</p>
+</blockquote>
+<h4 id="聚合提取阶段"><a href="#聚合提取阶段" class="headerlink" title="聚合提取阶段"></a>聚合提取阶段</h4><p>假设查询落入的分片数为 N，那么聚合阶段就是对 N*10 个结果集进行排序，然后再通过已经拿到的 document_id 查到对应的 document 并组装到队列里，组装完毕后将有序的数据返回给客户端。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>这篇文章粗略的介绍了 ES 的节点类型、CRUD 的数据走向和存储的基本逻辑结构以及所用到的一些算法，后续文章会对 ES 有更进一步的理解和认知。</p>
+<p>To be Continued…</p>
+
+        </div>
+        <footer class="article-footer">
             
-Relay &amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一个近乎完美的解决方案。
-什么是GraphQL呢？这是由facebook制定的定义在前端的数据查询语言规范（长的有点像JSON），来看一个官网例子123456789101112&#123;  user(id: 3500401) &#123;    id,    name,    isViewerFr
-        </p>
+
+
+
+    <a data-url="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/" data-id="cj1ll79900006j4679q883thl" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
     </div>
 </article>
+
+    <section id="comments">
     
-        </div>
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
     
-
-
-    </div></section>
-
+    </section>
 
 
                         </div>
@@ -247,6 +394,19 @@ Relay &amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一�
             
         </ul>
     </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/04/14/JVM监控工具小记/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">JVM 监控工具小记</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
     
     <div class="widgets-container">
         
@@ -444,11 +604,13 @@ Relay &amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一�
     var disqus_shortname = 'hexo-theme-hueman';
     
     
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/';
+    
     (function() {
     var dsq = document.createElement('script');
     dsq.type = 'text/javascript';
     dsq.async = true;
-    dsq.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
     (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     })();
     </script>
