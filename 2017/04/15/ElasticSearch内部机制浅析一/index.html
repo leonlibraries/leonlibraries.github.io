@@ -19,7 +19,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
 节点类型
 Master Eligible Node （候选主节点）：设置成node.master=true (default)">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/framework.jpg">
-<meta property="og:updated_time" content="2017-04-17T06:19:50.000Z">
+<meta property="og:updated_time" content="2017-04-17T09:25:45.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ElasticSearch 内部机制浅析（一）">
 <meta name="twitter:description" content="前言ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。
@@ -232,7 +232,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
 <li><p>replica shard: 副本分片，是主分片的副本拷贝，系统默认副本策略为 Quorum，即写入超过半数副本就可以返回成功，这里后续对副本写入再做介绍。</p>
 </li>
 </ul>
-<h2 id="Zen-Discovery-amp-Gossip-算法"><a href="#Zen-Discovery-amp-Gossip-算法" class="headerlink" title="Zen Discovery &amp; Gossip 算法"></a>Zen Discovery &amp; Gossip 算法</h2><p>ES 的分布式是去中心化的，节点的发现是通过 Gossip 算法来做到的，而后选举节点，让各自节点承担不同角色。这里简单介绍一下 Gossip 算法，假设环境中有两个节点NodeA NodeB，Gossip 算法有三种同步数据的方式：</p>
+<h2 id="Zen-Discovery-amp-Gossip-算法"><a href="#Zen-Discovery-amp-Gossip-算法" class="headerlink" title="Zen Discovery &amp; Gossip 算法"></a>Zen Discovery &amp; Gossip 算法</h2><p>ES 的分布式是去中心化的，节点的发现是通过 Gossip 算法来做到的，而后选举节点，让各自节点承担不同角色。这里简单介绍一下 Gossip 算法，假设环境中有两个节点NodeA NodeB，Gossip 算法有三种同步数据（Anti-Entropy）的方式：</p>
 <p>① A push B 方式 : A 传 DigestA 给 B，B 接受后回传 DigestA-B 给 A，A  更新 A-B 的数据给 B<br>② A Pull B 方式：A 传 DigestA 给 B， B 接受后 更新  B-A 的数据给 A<br>③ A Pull-Push B 方式：A 传 DigestA 给 B，B 接受后 更新  B-A 的数据给 A 并附带 DigestA-B ，A  更新 A-B 的数据给 B</p>
 <p>一百个节点下，一个更新的数据传播结果收敛度如图所示<br><img src="/2017/04/15/ElasticSearch内部机制浅析一/gossip1.png" alt=""><br>其中可以看到 Pull-Push 的收敛度非常好，在第七次遍历的时候就可以完成100个节点的发现了，ES 正是借鉴了上面的算法实现节点发现（Zen Discovery）的。<br>由于算法的复杂度为 <code>Lg(N)</code>，那么当节点的数目越来越庞大的时候，其发现节点的性能损耗只是呈 <code>Lg(N)</code>递增，换句话说这个算法对节点数目量庞大的集群来说非常受用。</p>
 <p>另外关于集群自动发现，不得不提两个参数的区别<br><code>discovery.zen.fd.ping_timeout</code> 错误检测的超时，在稳定运行的集群环境之中，检测主机与主机之间是否通畅<br><code>discovery.zen.ping_timeout</code> 仅在选举主节点的时候，这个超时机制才起作用</p>
@@ -261,7 +261,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
 
 
 
-    <a data-url="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/" data-id="cj1ll79900006j4679q883thl" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+    <a data-url="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/" data-id="cj1lqsg2500062d67zrsisdw1" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
 <script>
     (function ($) {
         $('body').on('click', function() {
@@ -398,6 +398,16 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
         
 <nav id="article-nav">
     
+        <a href="/2017/04/18/ElasticSearch内部机制浅析二/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            ElasticSearch 内部机制浅析（二）
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
     
         <a href="/2017/04/14/JVM监控工具小记/" id="article-nav-older" class="article-nav-link-wrap">
         <strong class="article-nav-caption">上一篇</strong>
@@ -416,6 +426,26 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
         <h3 class="widget-title">最新文章</h3>
         <div class="widget">
             <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/18/ElasticSearch内部机制浅析二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/18/ElasticSearch内部机制浅析二/cap.jpg)" alt="ElasticSearch 内部机制浅析（二）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/18/ElasticSearch内部机制浅析二/" class="title">ElasticSearch 内部机制浅析（二）</a></p>
+                            <p class="item-date"><time datetime="2017-04-18T09:00:15.000Z" itemprop="datePublished">2017-04-18</time></p>
+                        </div>
+                    </li>
                 
                     <li>
                         
@@ -497,26 +527,6 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
                         </div>
                     </li>
                 
-                    <li>
-                        
-                        <div class="item-thumbnail">
-                            <a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="thumbnail">
-    
-    
-        <span style="background-image:url(/2017/02/27/Lucene学习笔记一（附源码分析）/full-text-searching.jpg)" alt="Lucene 学习笔记一（附源码分析）" class="thumbnail-image"></span>
-    
-    
-</a>
-
-                        </div>
-                        
-                        <div class="item-inner">
-                            <p class="item-category"><a class="article-category-link" href="/categories/全文搜索/">全文搜索</a></p>
-                            <p class="item-title"><a href="/2017/02/27/Lucene学习笔记一（附源码分析）/" class="title">Lucene 学习笔记一（附源码分析）</a></p>
-                            <p class="item-date"><time datetime="2017-02-27T02:27:15.000Z" itemprop="datePublished">2017-02-27</time></p>
-                        </div>
-                    </li>
-                
             </ul>
         </div>
     </div>
@@ -526,7 +536,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
     <div class="widget-wrap widget-list">
         <h3 class="widget-title">分类</h3>
         <div class="widget">
-            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
         </div>
     </div>
 
@@ -536,7 +546,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
     <div class="widget-wrap widget-list">
         <h3 class="widget-title">归档</h3>
         <div class="widget">
-            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
         </div>
     </div>
 
@@ -546,7 +556,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
     <div class="widget-wrap widget-list">
         <h3 class="widget-title">标签</h3>
         <div class="widget">
-            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/架构/">架构</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/组件化/">组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
         </div>
     </div>
 
@@ -556,7 +566,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
     <div class="widget-wrap widget-float">
         <h3 class="widget-title">标签云</h3>
         <div class="widget tagcloud">
-            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 12.5px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 17.5px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 10px;">全文搜索</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/大数据/" style="font-size: 15px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/HBase/" style="font-size: 12.5px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 20px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 12.5px;">全文搜索</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 17.5px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/架构/" style="font-size: 10px;">架构</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/组件化/" style="font-size: 10px;">组件化</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
         </div>
     </div>
 

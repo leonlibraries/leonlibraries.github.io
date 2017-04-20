@@ -3,26 +3,26 @@
 <head>
     <meta charset="utf-8">
     
-    <title>面向接口编程与策略模式 | 茅屋为秋风所破歌</title>
+    <title>ElasticSearch 内部机制浅析（二） | 茅屋为秋风所破歌</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     
-        <meta name="keywords" content="面向对象,代码设计" />
+        <meta name="keywords" content="大数据,Java,全文搜索,多线程" />
     
-    <meta name="description" content="面向接口编程 &amp;amp; 面向对象编程
-Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
+    <meta name="description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
 <meta property="og:type" content="article">
-<meta property="og:title" content="面向接口编程与策略模式">
-<meta property="og:url" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/index.html">
+<meta property="og:title" content="ElasticSearch 内部机制浅析（二）">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/18/ElasticSearch内部机制浅析二/index.html">
 <meta property="og:site_name" content="茅屋为秋风所破歌">
-<meta property="og:description" content="面向接口编程 &amp;amp; 面向对象编程
-Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
-<meta property="og:image" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/oop.jpg">
-<meta property="og:updated_time" content="2017-01-24T08:30:55.000Z">
+<meta property="og:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/18/ElasticSearch内部机制浅析二/cap.jpg">
+<meta property="og:updated_time" content="2017-04-20T02:05:17.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="面向接口编程与策略模式">
-<meta name="twitter:description" content="面向接口编程 &amp;amp; 面向对象编程
-Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-orien">
-<meta name="twitter:image" content="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/oop.jpg">
+<meta name="twitter:title" content="ElasticSearch 内部机制浅析（二）">
+<meta name="twitter:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/18/ElasticSearch内部机制浅析二/cap.jpg">
     
 
     
@@ -127,18 +127,18 @@ Interface-based programming, also known as interface-based architecture, is an a
                         <div class="main-body-header">
     <h1 class="header">
     
-    <a class="page-title-link" href="/categories/代码设计/">代码设计</a>
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
     </h1>
 </div>
                         <div class="main-body-content">
-                            <article id="post-面向接口编程与策略模式" class="article article-single article-type-post" itemscope itemprop="blogPost">
+                            <article id="post-ElasticSearch内部机制浅析二" class="article article-single article-type-post" itemscope itemprop="blogPost">
     <div class="article-inner">
         
             <header class="article-header">
                 
     
         <h1 class="article-title" itemprop="name">
-        面向接口编程与策略模式
+        ElasticSearch 内部机制浅析（二）
         </h1>
     
 
@@ -146,25 +146,126 @@ Interface-based programming, also known as interface-based architecture, is an a
         
         
             <div class="article-subtitle">
-                <a href="/2016/03/29/面向接口编程与策略模式/" class="article-date">
-    <time datetime="2016-03-29T02:22:20.000Z" itemprop="datePublished">2016-03-29</time>
+                <a href="/2017/04/18/ElasticSearch内部机制浅析二/" class="article-date">
+    <time datetime="2017-04-18T09:00:15.000Z" itemprop="datePublished">2017-04-18</time>
 </a>
                 
-    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/代码设计/">代码设计</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/面向对象/">面向对象</a></li></ul>
+    <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/">Java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/全文搜索/">全文搜索</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/多线程/">多线程</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/大数据/">大数据</a></li></ul>
 
             </div>
         
         
         <div class="article-entry" itemprop="articleBody">
-            <p><img src="/2016/03/29/面向接口编程与策略模式/oop.jpg" alt="面向对象" title="面向对象"></p>
-<h1 id="面向接口编程-amp-面向对象编程"><a href="#面向接口编程-amp-面向对象编程" class="headerlink" title="面向接口编程 &amp; 面向对象编程"></a>面向接口编程 &amp; 面向对象编程</h1><blockquote>
-<p>Interface-based programming, also known as interface-based architecture, is an architectural pattern for implementing modular programming at the component level in an object-oriented programming language which does not have a module system. （面向接口编程，也被熟知为基于接口的设计，是一种基于组件级别的，面向对象语言的模块化编程设计实现）</p>
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。</p>
+<h2 id="Split-Brain"><a href="#Split-Brain" class="headerlink" title="Split Brain"></a>Split Brain</h2><p>之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的<code>discovery.zen.minimum_master_nodes</code>参数）。当然，任何分布式系统都是不能够接受脑裂的情况出现的，因此这里我们不过多讨论 P。</p>
+<h2 id="AP？CP？"><a href="#AP？CP？" class="headerlink" title="AP？CP？"></a>AP？CP？</h2><p><img src="/2017/04/18/ElasticSearch内部机制浅析二/cap.jpg" alt=""><br>既然不讨论 P，那么 ES 到底属于 CP 还是 AP 设计呢？<br><strong>我的理解是，脱离了具体配置谈 CAP 都是扯淡。</strong><br>为什么这么说呢？在我看来，AP 和 CP 并没有很明确的界限，一切根据配置而论，而配置本身会根据业务场景在 AP 与 CP 之间做一个折衷，即所谓的 Trade-Off。</p>
+<h2 id="读主分片-or-读副本？"><a href="#读主分片-or-读副本？" class="headerlink" title="读主分片 or 读副本？"></a>读主分片 or 读副本？</h2><p>读数据的时候我们可以根据 <code>Preference</code>指定读取的分片类型：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>_primary</td>
+<td>只会在主分片操作</td>
+</tr>
+<tr>
+<td>_primary_first</td>
+<td>优先主分片操作，如果主分片不可用，就会找其他分片操作</td>
+</tr>
+<tr>
+<td>_replica</td>
+<td>只会在副本分片操作</td>
+</tr>
+<tr>
+<td>_replica_first</td>
+<td>优先副本分片操作，如果副本分片不可用，就会找其他分片操作</td>
+</tr>
+<tr>
+<td>_local</td>
+<td>尽可能在本地分片操作</td>
+</tr>
+<tr>
+<td>_prefer_nodes:abc,xyz</td>
+<td>尽可能指定在 abc,xyz 节点上执行</td>
+</tr>
+<tr>
+<td>_shards:2,3</td>
+<td>在指定的分片上操作，2，3为分片 ID</td>
+</tr>
+<tr>
+<td>_only_nodes</td>
+<td>在<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster.html" target="_blank" rel="external">指定的 Node</a> 上操作</td>
+</tr>
+</tbody>
+</table>
+<p><code>Preference</code>的配置选择，实际上是 AP 与 CP 的权衡过程。如果对可用性要求很高，那么<code>_primary</code>这个参数是万万不可用；如果对一致性要求相对较高但可用性也需要保证的场景来说，可以使用<code>_primary_first</code>；如果对一致性要求极高的场景，但也就放弃了一定程度的可用性，这样用<code>_primary</code>会更合适一些。以此类推，需要根据自己的场景选择参数。</p>
+<h2 id="TransLog"><a href="#TransLog" class="headerlink" title="TransLog"></a>TransLog</h2><p>TransLog （即所谓的写前日志WAL，Write Ahead Log）的机制与 MySQL 的 binlog，HBase 的 Hlog 并无太大差别。TransLog 本身是写入到 FS cache 的，什么时候 fsync 到磁盘取决于数据能接受丢失的程度。<br>换句话说，如果需要 ES 具备十分强悍的写入能力，数据丢了一部分也没太大关系，这种情况你可以将 fsync 设置为异步执行的，并且把 fsync 的时间间隔设置的很长；如果你需要非常严谨的数据，不能够接受丢失数据，那么你可能在每次写入 TransLog 的时候都要 fsync 一次（这是默认机制）。<br>然而业务并非总是这么理想化，现实中同样需要在可用性与一致性两者之间做权衡。<br>下面介绍 TransLog 的相关配置。</p>
+<p><strong>TransLog Settings（持久化策略配置）</strong>：</p>
+<ul>
+<li><code>index.translog.durability</code>：如果设为 <code>async</code> ，默认情况下，ES 会每隔五秒对 TransLog 执行一次 fsync 和 commit 的操作；如果设为 <code>request(default)</code>，则在每次真正执行index、delete、update 或者 bulk index 操作前立刻将 TransLog fsync 到每一个主分片和副本分片中，并返回成功；</li>
+<li><code>index.translog.sync_interval</code>：只有将<code>index.translog.durability</code>设置为<code>async</code>时才有效，默认5s，表示 TransLog 持久化的时间间隔。</li>
+</ul>
+<p><strong>Flush Settings（TransLog清洗配置）</strong>：<br>为了避免 Translog 文件太大导致恢复过慢，适当的清洗是必要的。<br><code>index.translog.flush_threshold_size</code>：当 translog 日志达到这个配置大小的时候将执行一次 Flush 操作，默认<code>512mb</code>；<br>值得一提，默认情况下每隔三十分钟会 Flush 一次。但一般情况下不会手动调整清洗策略。</p>
+<blockquote>
+<p>An Elasticsearch flush is the process of performing a Lucene commit and starting a new translog.</p>
 </blockquote>
-<p>面向接口编程和面向对象编程实际上是两个不同层级的概念。理论上说具有对象概念的程序设计都可以称之为面向对象编程，而面向接口编程则是从组件的级别来设计代码，人为地将抽象与实现分离。面向接口编程仅仅只是面向对象编程的一种模块化实现形式而已。</p>
-<h1 id="所谓“接口”"><a href="#所谓“接口”" class="headerlink" title="所谓“接口”"></a>所谓“接口”</h1><p>面向接口编程中的”接口”二字具体到语言中（Java）不仅仅是<code>interface</code>关键字这么简单。可以理解为接口是对具体实现的抽象。试想一下，团队协同以及代码健壮可维护性的需求日益增强的趋势下，通过暴露接口来提供服务本身是一件非常愉悦的事情。A需要调用B中的服务，A却不需要去仔细阅读B写的代码，通过接口文档就可以看出对应业务的方法和参数类型，进而使用RMI或者RPC等相关技术实现模块化调用。而这一切本身就是<strong>面向接口编程</strong>。</p>
-<h1 id="abstract-class-和-interface"><a href="#abstract-class-和-interface" class="headerlink" title="abstract class 和 interface"></a>abstract class 和 interface</h1><p>为什么有这样的问题呢？很多刚接触面向接口编程的Java开发者都或多或少遇到这样的困惑。他们大多会认为，既然是面向接口编程，那么把实现抽象为接口就是优良的设计。但实际上他们混淆了Java中的<code>interface</code>和面向接口编程中的“接口”概念。实际上，<code>interface</code>、<code>abstract class</code>以及普通的<code>class</code>都能成为所谓的接口，甚至<code>abstract class</code>的功能可以更加强大。那么问题来了，<code>interface</code>和<code>abstract class</code>分别对应于什么场景下使用更合适一些？<br><code>interface</code>和<code>abstract class</code>区别在于<code>interface</code>约定的是务必要实现的方法和参数，强调规则的制定；<code>abstract class</code>则在抽象的同时允许提供一些默认的行为，以达到代码复用的效果。例如定义一些基础、初始化以及类回收方法等。另外，还有一个常识性的区别，一个实现类（相对于抽象而言）可以实现多个<code>interface</code>，而只能继承一个<code>abstract class</code>，在代码设计的过程中务必注意。</p>
-<h1 id="策略模式-（Strategy-Pattern）"><a href="#策略模式-（Strategy-Pattern）" class="headerlink" title="策略模式 （Strategy Pattern）"></a>策略模式 （Strategy Pattern）</h1><p>作为面向接口编程的一个典型设计模式，应用相当普遍。本文之所以讨论策略模式，是该模式本身把“面向接口编程”思想很好地体现了。这里举个简单的例子以供参考。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//定义策略接口</span></div><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Strategy</span> </span>&#123; <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span></span>; &#125;</div><div class="line"><span class="comment">/**************   策略一   **************/</span></div><div class="line"><span class="comment">//策略1抽象类</span></div><div class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">TemplateMethod1</span> <span class="keyword">implements</span> <span class="title">Strategy</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span> </span>&#123;</div><div class="line">      start();</div><div class="line">      <span class="keyword">while</span> (nextTry() &amp;&amp; ! isSolution())</div><div class="line">         ;</div><div class="line">      stop();</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span>    <span class="title">start</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">nextTry</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">isSolution</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span>    <span class="title">stop</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"><span class="comment">//策略1实现类</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Impl1</span> <span class="keyword">extends</span> <span class="title">TemplateMethod1</span> </span>&#123;</div><div class="line">   <span class="keyword">private</span> <span class="keyword">int</span> state = <span class="number">1</span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</div><div class="line">     System.out.print( <span class="string">"start  "</span> );</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">stop</span><span class="params">()</span> </span>&#123;</div><div class="line">     System.out.println( <span class="string">"stop"</span> );</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">nextTry</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"nextTry-"</span> + state++ + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">isSolution</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"isSolution-"</span> + (state == <span class="number">3</span>) + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> (state == <span class="number">3</span>);</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">/**************   策略二   **************/</span></div><div class="line"><span class="comment">//策略2抽象类</span></div><div class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">TemplateMethod2</span> <span class="keyword">implements</span> <span class="title">Strategy</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">solve</span><span class="params">()</span> </span>&#123;                             </div><div class="line">      <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">         preProcess();</div><div class="line">         <span class="keyword">if</span> (search()) <span class="keyword">break</span>;</div><div class="line">         postProcess();</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">preProcess</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">search</span><span class="params">()</span></span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">postProcess</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"><span class="comment">//策略2实现类</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Impl2</span> <span class="keyword">extends</span> <span class="title">TemplateMethod2</span> </span>&#123;</div><div class="line">   <span class="keyword">private</span> <span class="keyword">int</span> state = <span class="number">1</span>;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span>    <span class="title">preProcess</span><span class="params">()</span>  </span>&#123; System.out.print( <span class="string">"preProcess  "</span> ); &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span>    <span class="title">postProcess</span><span class="params">()</span> </span>&#123; System.out.print( <span class="string">"postProcess  "</span> ); &#125;</div><div class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">search</span><span class="params">()</span> </span>&#123;</div><div class="line">      System.out.print( <span class="string">"search-"</span> + state++ + <span class="string">"  "</span> );</div><div class="line">      <span class="keyword">return</span> state == <span class="number">3</span> ? <span class="keyword">true</span> : <span class="keyword">false</span>;</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**************   测试类   **************/</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StrategyDemo</span> </span>&#123;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">clientCode</span><span class="params">( Strategy strat )</span> </span>&#123;</div><div class="line">     strat.solve();</div><div class="line">   &#125;</div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">( String[] args )</span> </span>&#123;</div><div class="line">      Strategy[] algorithms = &#123; <span class="keyword">new</span> Impl1(), <span class="keyword">new</span> Impl2() &#125;;</div><div class="line">      <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; algorithms.length; i++) &#123;</div><div class="line">         clientCode( algorithms[i] );</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>其中<code>interface</code>定义的是最抽象的东西，也就是上文说的规则，但是过度抽象不利于代码的复用。于是<code>abstract class</code>的优势就能很好的利用了。介于绝对抽象和具体实现之间，<code>abstract class</code>既能够实现接口方法，提供一个默认方法支持（所谓“策略”），又能制定出该策略下附带的某些必须实现的抽象方法（所谓“规则”），在<code>interface</code>和具体实现类之间起到了很好的过渡效果。</p>
+<p>ES 的 Flush 操作包含了 Lucene索引的 fsync 以及 Translog 的清空，两个操作，因此日志清洗并不会导致数据丢失！</p>
+<p>数据恢复的话这里没什么好说的，和其他分布式存储的 WAL 基本一致，从磁盘读取出 TransLog，然后 Replay 即可。</p>
+<h2 id="并发策略之悲观锁"><a href="#并发策略之悲观锁" class="headerlink" title="并发策略之悲观锁"></a>并发策略之悲观锁</h2><p>ES 不支持 ACID 事务，ES 无法确保多个 Documents 处在同一个事务里。如果我们用 RDBS 存储业务数据，ES 只是作为一个搜索引擎对业务数据做了一份副本而已，这可能是基于 binlog 有序同步过来的。这种情况下，数据的 ACID 由 RDBS 来控制，RDBS 本身是有事务的，这种用法并不存在并发问题。</p>
+<p>可当不使用 RDBS 的时候，ES 就直接拿来做可靠性存储了，这时候的 ACID 怎么保证呢？</p>
+<p>一个不完美的方案就是悲观锁，ES 是通过创建 lock 文件来对资源进行锁定，与其他线程隔离开来，控制并发。锁大致根据用途分为如下几种：</p>
+<ul>
+<li><strong>全局锁（Global Locking）</strong>：<br>获取全局锁</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/global/_create</div></pre></td></tr></table></figure>
+<p>执行操作语句完后释放全局锁，如果在已锁状态下加锁，会报错，中断程序无法继续运行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">DELETE /fs/lock/global</div></pre></td></tr></table></figure>
+<p>其性能最差，不推荐使用。</p>
+<ul>
+<li><strong>文档锁（Document Locking）</strong>：<br>给单个 document 以一个文档锁，这个时候把锁的影响范围从全局缩小到了文档级别，更细颗粒，提高并发性能。<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/_bulk</div><div class="line">&#123; &quot;create&quot;: &#123; &quot;_id&quot;: 1&#125;&#125;</div><div class="line">&#123; &quot;process_id&quot;: 123    &#125;</div><div class="line">&#123; &quot;create&quot;: &#123; &quot;_id&quot;: 2&#125;&#125;</div><div class="line">&#123; &quot;process_id&quot;: 123    &#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>分别给 id 为1和2的 document 上了锁，这里需要指定唯一的进程 ID 123。不过这里要注意的是，一旦document 上锁，其他线程想给它加锁是会报错的，因此可以达到互斥的效果，报错后程序就中断，无法执行对应的操作了。<br>为了使 lock 可以被查到可以调用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">POST /fs/_refresh</div></pre></td></tr></table></figure></p>
+<p>而后可以浏览一下进程 ID 为123的 lock<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">GET /fs/lock/_search?scroll=1m</div><div class="line">&#123;</div><div class="line">    &quot;sort&quot; : [&quot;_doc&quot;],</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;match&quot; : &#123;</div><div class="line">            &quot;process_id&quot; : 123</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>为了达到锁可以重入的效果，我们可以执行这么一句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /fs/lock/1/_update</div><div class="line">&#123;</div><div class="line">  &quot;upsert&quot;: &#123; &quot;process_id&quot;: 123 &#125;,</div><div class="line">  &quot;script&quot;: &quot;if ( ctx._source.process_id != process_id )</div><div class="line">  &#123; assert false &#125;; ctx.op = &apos;noop&apos;;&quot;</div><div class="line">  &quot;params&quot;: &#123;</div><div class="line">    &quot;process_id&quot;: 123</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>意思是，原本已经上锁的时候再去加锁会出现报错，哪怕是这个锁的持有者二次加锁也会报错。现在用这种方式获取锁好处就是使得锁本身是可以被持有者重入多次而不会报错的。</p>
+<p>最后释放锁<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/_bulk</div><div class="line">&#123; &quot;delete&quot;: &#123; &quot;_id&quot;: 1&#125;&#125;</div><div class="line">&#123; &quot;delete&quot;: &#123; &quot;_id&quot;: 2&#125;&#125;</div></pre></td></tr></table></figure></p>
+<ul>
+<li><strong>文件树锁（Tree Locking）</strong>：<br>除了以上的锁以外，ES 还支持文件目录锁。目录锁的特点是既存在独占锁（Exclusive Lock），又存在共享锁（Shared Lock）。这里就涉及到的原理上和上边几乎一样，只不过独占锁属性应该这么设置：<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123; <span class="string">"lock_type"</span>: <span class="string">"exclusive"</span> &#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>共享锁则应该这么来<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"lock_type"</span>:  <span class="string">"shared"</span>,</div><div class="line">  <span class="string">"lock_count"</span>: <span class="number">1</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这里的 lock_count 表示已经被多少个实例共享了。<br>尝试获取锁可以改成这样<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /fs/lock/%2Fclinton/_update</div><div class="line">&#123;</div><div class="line">  &quot;upsert&quot;: &#123;</div><div class="line">    &quot;lock_type&quot;:  &quot;shared&quot;,</div><div class="line">    &quot;lock_count&quot;: 1</div><div class="line">  &#125;,</div><div class="line">  &quot;script&quot;: &quot;if (ctx._source.lock_type == &apos;exclusive&apos;)</div><div class="line">  &#123; assert false &#125;; ctx._source.lock_count++&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>判断如果是独占锁则抛错，如果是共享锁则将 lock_count+1。<br>当然，这里也可以改成可重入的，不多赘述。</p>
+<blockquote>
+<p><strong>Tips</strong>：以上几种锁并非只针对 ES 的资源来使用，资源可以是各种各样的，甚至可以拿 ES 做分布式锁来使用。</p>
+</blockquote>
+<p>悲观锁的实现就是为了强数据一致性而产生的，但是在使用悲观锁的时候一定要慎重，务必要想清楚你的业务场景用这种很重的锁是否合适？如果十分有必要用，你就得思考如何缩小颗粒度来减小锁影响的范围，甚至我个人觉得在用到悲观锁的时候，ES 并非是一个很不错的选择，我们甚至可以借助 Zookeeper 或者 Redis 等第三方中间件来实现分布式锁，将 ES 的资源隔离开来。<br>另外，无论哪种锁都无法确保当某个线程获得锁以后挂了，都务必考虑锁的释放问题，避免死锁。这个就不在本文讨论范围。</p>
+<h2 id="并发策略之乐观并发控制"><a href="#并发策略之乐观并发控制" class="headerlink" title="并发策略之乐观并发控制"></a>并发策略之乐观并发控制</h2><p>乐观并发控制（optimistic concurrency control）的事务包括以下阶段：</p>
+<blockquote>
+<ul>
+<li>读取：事务将数据读入缓存，这时系统会给事务分派一个时间戳。</li>
+<li>校验：事务执行完毕后，进行提交。这时同步校验所有事务，如果事务所读取的数据在读取之后又被其他事务修改，则产生冲突，事务被中断回滚。</li>
+<li>写入：通过校验阶段后，将更新的数据写入数据库。<br>用以确保较新版本的数据不会被旧版本的数据覆盖</li>
+</ul>
+</blockquote>
+<p>ES 是怎么保证的是老版本数据绝对不会覆盖新版本呢？<br>因为考虑到某些 replica 同步的过程是平行且异步化的，当更新十分频繁的时候，数据的先来后到谁都说不准，因此对于每个 Document，ES 都会指定一个<code>_version</code>字段存储版本号，而这个版本号会随着 document 的每次变更而自增，每一个新的数据都有着固定的版本号，用以标识数据的先来后到，老版本无法覆盖新版本，这就确保分片之间的数据不会出现不一致的情况，甚至可以避免数据丢失。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>CP？AP？这或许并不是那么重要，但是我很看重这样的思考过程，哪怕是没有结果，在这个过程里可以增进对 ES 的认知和理解，而不会单纯将一个分布式系统简单归纳为 AP 还是 CP。<br>但不得不说，ES 还是非常适合 AP 场景的，并且他的 TransLog 机制对数据的最终一致性也有很强有力的保障。</p>
+<p>之后还会继续更新 ES 的相关文章，To Be Continued…</p>
+<p>推荐阅读：</p>
+<ul>
+<li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html</a></li>
+<li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html</a></li>
+<li><a href="http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02" target="_blank" rel="external">http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02</a></li>
+<li><a href="https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html</a></li>
+<li><a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank" rel="external">https://en.wikipedia.org/wiki/Optimistic_concurrency_control</a></li>
+<li><a href="https://zh.wikipedia.org/wiki/CAP定理" target="_blank" rel="external">https://zh.wikipedia.org/wiki/CAP定理</a></li>
+</ul>
 
         </div>
         <footer class="article-footer">
@@ -172,7 +273,7 @@ Interface-based programming, also known as interface-based architecture, is an a
 
 
 
-    <a data-url="https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/" data-id="cj1lqsg7k00322d67e4orh95x" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+    <a data-url="https://leonlibraries.github.io/2017/04/18/ElasticSearch内部机制浅析二/" data-id="cj1lqsg2c00092d67maefrj56" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
 <script>
     (function ($) {
         $('body').on('click', function() {
@@ -309,20 +410,10 @@ Interface-based programming, also known as interface-based architecture, is an a
         
 <nav id="article-nav">
     
-        <a href="/2016/04/06/RelayReact数据驱动层初探/" id="article-nav-newer" class="article-nav-link-wrap">
-        <strong class="article-nav-caption">下一篇</strong>
-        <p class="article-nav-title">
-        
-            Relay | React数据驱动层初探
-        
-        </p>
-        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
-    </a>
     
-    
-        <a href="/2016/03/14/ECMAScript6直面Callback-Hell/" id="article-nav-older" class="article-nav-link-wrap">
+        <a href="/2017/04/15/ElasticSearch内部机制浅析一/" id="article-nav-older" class="article-nav-link-wrap">
         <strong class="article-nav-caption">上一篇</strong>
-        <p class="article-nav-title">ECMAScript6：直面Callback Hell</p>
+        <p class="article-nav-title">ElasticSearch 内部机制浅析（一）</p>
         <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
         </a>
     
@@ -525,7 +616,7 @@ Interface-based programming, also known as interface-based architecture, is an a
     var disqus_shortname = 'hexo-theme-hueman';
     
     
-    var disqus_url = 'https://leonlibraries.github.io/2016/03/29/面向接口编程与策略模式/';
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/18/ElasticSearch内部机制浅析二/';
     
     (function() {
     var dsq = document.createElement('script');
