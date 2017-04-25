@@ -19,7 +19,7 @@ Master Eligible Node （候选主节点）：设置成node.master=true (default)
 节点类型
 Master Eligible Node （候选主节点）：设置成node.master=true (default)">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/15/ElasticSearch内部机制浅析一/framework.jpg">
-<meta property="og:updated_time" content="2017-04-22T14:12:06.000Z">
+<meta property="og:updated_time" content="2017-04-25T02:22:09.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ElasticSearch 内部机制浅析（一）">
 <meta name="twitter:description" content="前言ElasticSearch （以下简称为 ES）从名字上看是搜索引擎，实际上除了搜索的作用，ES 甚至还支持上千台服务器分布式部署以及 PB 级别的可靠性存储，适合构建高可用和可扩展的系统。本文从设计的角度探讨 ES 是如何运作且能够支撑如此庞大的数据量的检索和插入。
@@ -274,7 +274,7 @@ var _hmt = _hmt || [];
 <blockquote>
 <p><strong>Tips</strong>：深度分页查询是有风险的，所谓深度查询就是涉及到大量 shard 的查询时，直接跳页到几千甚至上万页的数据，协调节点就有宕机的风险，毕竟协调节点需要将大量数据汇总起来进行排序，耗费大量的内存和 CPU 资源。所以慎用！尽可能用 Scroll API ，即只允许拿到下一页的信息，不允许跳页的情况出现，会避免这种情况的发生。</p>
 </blockquote>
-<p><img src="/2017/04/15/ElasticSearch内部机制浅析一/deep.query.png" alt=""></p>
+<p><img src="/2017/04/15/ElasticSearch内部机制浅析一/deepquery.png" alt=""></p>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>这篇文章粗略的介绍了 ES 的节点类型、CRUD 的数据走向和存储的基本逻辑结构以及所用到的一些算法，后续文章会对 ES 有更进一步的理解和认知。</p>
 <p>To be Continued…</p>
 
