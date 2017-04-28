@@ -3,18 +3,26 @@
 <head>
     <meta charset="utf-8">
     
-    <title>标签：: 架构 | 茅屋为秋风所破歌</title>
+    <title>ElasticSearch 内部机制浅析（三） | 茅屋为秋风所破歌</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     
-    <meta name="description" content="Leon Wong&apos;s blogs">
-<meta property="og:type" content="website">
-<meta property="og:title" content="茅屋为秋风所破歌">
-<meta property="og:url" content="https://leonlibraries.github.io/tags/架构/index.html">
+        <meta name="keywords" content="大数据,Java,全文搜索" />
+    
+    <meta name="description" content="前言上篇从分布式的角度阐述了 ES 的分布式设计和思想，这一篇打算与 Lucene 结合起来看看 ES 的内在原理。废话不多说，进入正题。
+Lucene 的段（Segment）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ElasticSearch 内部机制浅析（三）">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/27/ElasticSearch内部机制浅析三/index.html">
 <meta property="og:site_name" content="茅屋为秋风所破歌">
-<meta property="og:description" content="Leon Wong&apos;s blogs">
+<meta property="og:description" content="前言上篇从分布式的角度阐述了 ES 的分布式设计和思想，这一篇打算与 Lucene 结合起来看看 ES 的内在原理。废话不多说，进入正题。
+Lucene 的段（Segment）">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg">
+<meta property="og:updated_time" content="2017-04-28T01:26:09.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="茅屋为秋风所破歌">
-<meta name="twitter:description" content="Leon Wong&apos;s blogs">
+<meta name="twitter:title" content="ElasticSearch 内部机制浅析（三）">
+<meta name="twitter:description" content="前言上篇从分布式的角度阐述了 ES 的分布式设计和思想，这一篇打算与 Lucene 结合起来看看 ES 的内在原理。废话不多说，进入正题。
+Lucene 的段（Segment）">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg">
     
 
     
@@ -131,74 +139,99 @@ var _hmt = _hmt || [];
                         <div class="main-body-header">
     <h1 class="header">
     
-    <i class="icon fa fa-tag"></i>标签：: <em>架构</em>
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
     </h1>
 </div>
                         <div class="main-body-content">
-                            
-
-    
-    
+                            <article id="post-ElasticSearch内部机制浅析三" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
         
-        
-        <section class="archives-wrap">
-            <div class="archive-year-wrap">
-                <a href="/archives/2017" class="archive-year"><i class="icon fa fa-calendar-o"></i>2017</a>
-            </div>
-            <div class="archives">
-    
-    
-    
-        <div class="article-row">
-    
-        <article class="article article-summary">
-    <div class="article-summary-inner">
-        
-        <a href="/2017/04/13/CDH安装运维小记/" class="thumbnail">
-    
-    
-        <span style="background-image:url(/2017/04/13/CDH安装运维小记/deploy.jpeg)" alt="CDH安装运维小记" class="thumbnail-image"></span>
-    
-    
-        
-<span class="comment-counter">
-    <i class="fa fa-comments-o"></i>
-    
-        <span class="disqus-comment-count" data-disqus-identifier="" data-disqus-url="https://leonlibraries.github.io/2017/04/13/CDH安装运维小记/">0</span>
-    
-</span>
-
-    
-</a>
-
-        
-        <div class="article-meta">
-            <div class="category">
-            <a class="article-category-link" href="/categories/大数据/">大数据</a>
-            </div>
-            <div class="date"><time datetime="2017-04-13T02:27:15.000Z" itemprop="datePublished">2017-04-13</time></div>
-        </div>
-        
+            <header class="article-header">
+                
     
         <h1 class="article-title" itemprop="name">
-        <a href="/2017/04/13/CDH安装运维小记/">CDH安装运维小记</a>
+        ElasticSearch 内部机制浅析（三）
         </h1>
     
 
-        <p class="article-excerpt">
-            理想中的部署蓝图
-Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决的办法，跟着文档一步一步走的东西不多赘述。
-我这边部署六台服务器(系统版本 CentOS 6.5)，如下所示123456192.168.240.100 CDHt-240-100192.168.240.101 CDHt-240-101192.168.240.102 CDHt-240-102192.168.240.103 C
-        </p>
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="article-date">
+            <time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Java/">Java</a>, <a class="tag-link" href="/tags/全文搜索/">全文搜索</a>, <a class="tag-link" href="/tags/大数据/">大数据</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇从分布式的角度阐述了 ES 的分布式设计和思想，这一篇打算与 Lucene 结合起来看看 ES 的内在原理。废话不多说，进入正题。</p>
+<h2 id="Lucene-的段（Segment）"><a href="#Lucene-的段（Segment）" class="headerlink" title="Lucene 的段（Segment）"></a>Lucene 的段（Segment）</h2><p><img src="/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg" alt=""></p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
     </div>
 </article>
+
+    <section id="comments">
     
-        </div>
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
     
-
-
-    </div></section>
-
+    </section>
 
 
                         </div>
@@ -227,6 +260,19 @@ Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决�
             
         </ul>
     </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/04/20/ElasticSearch内部机制浅析二/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">ElasticSearch 内部机制浅析（二）</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
     
     <div class="widgets-container">
         
@@ -424,11 +470,13 @@ Hosts 文件这里主要记录我在安装过程中遇到的问题以及解决�
     var disqus_shortname = 'hexo-theme-hueman';
     
     
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/27/ElasticSearch内部机制浅析三/';
+    
     (function() {
     var dsq = document.createElement('script');
     dsq.type = 'text/javascript';
     dsq.async = true;
-    dsq.src = '//' + disqus_shortname + '.disqus.com/count.js';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
     (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     })();
     </script>

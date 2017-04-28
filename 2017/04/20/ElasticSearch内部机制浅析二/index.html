@@ -17,7 +17,7 @@ Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，�
 <meta property="og:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
 Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/cap.jpg">
-<meta property="og:updated_time" content="2017-04-20T05:34:53.000Z">
+<meta property="og:updated_time" content="2017-04-28T01:25:53.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ElasticSearch 内部机制浅析（二）">
 <meta name="twitter:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
@@ -272,7 +272,7 @@ var _hmt = _hmt || [];
 <li>写入：通过校验阶段后，将更新的数据写入数据库。<br>用以确保较新版本的数据不会被旧版本的数据覆盖</li>
 </ul>
 </blockquote>
-<p>ES 是怎么保证的是老版本数据绝对不会覆盖新版本呢？<br>因为考虑到某些 replica 同步的过程是平行且异步化的，当更新十分频繁的时候，数据的先来后到谁都说不准，因此对于每个 Document，ES 都会指定一个<code>_version</code>字段存储版本号，而这个版本号会随着 document 的每次变更而自增，每一个新的数据都有着固定的版本号，用以标识数据的先来后到，老版本无法覆盖新版本，这就确保分片之间的数据不会出现不一致的情况，甚至可以避免数据丢失。</p>
+<p>ES 是怎么保证的是老版本数据绝对不会覆盖新版本呢？<br>大致是先读取需要被修改的记录的最新版本号，然后利用 CAS 算法将对记录做出修改，一旦修改成功，就会将数据平行拷贝到各个节点做副本。因为考虑到某些 replica 同步的过程是平行且异步化的，当更新十分频繁的时候，数据的先来后到谁都说不准，因此对于每个 Document，ES 都会指定一个<code>_version</code>字段存储版本号，而这个版本号会随着 document 的每次变更而自增，每一个新的数据都有着固定的版本号，用以标识数据的先来后到，老版本无法覆盖新版本，这就确保分片之间的数据不会出现不一致的情况，甚至可以避免数据丢失。</p>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>CP？AP？这或许并不是那么重要，但是我很看重这样的思考过程，哪怕是没有结果，在这个过程里可以增进对 ES 的认知和理解，而不会单纯将一个分布式系统简单归纳为 AP 还是 CP。<br>但不得不说，ES 还是非常适合 AP 场景的，并且他的 TransLog 机制对数据的最终一致性也有很强有力的保障。</p>
 <p>之后还会继续更新 ES 的相关文章，To Be Continued…</p>
 <p>推荐阅读：</p>
@@ -372,7 +372,7 @@ window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMin
         
 <nav id="article-nav">
     
-        <a href="/2017/04/23/ElasticSearch内部机制浅析三/" id="article-nav-newer" class="article-nav-link-wrap">
+        <a href="/2017/04/27/ElasticSearch内部机制浅析三/" id="article-nav-newer" class="article-nav-link-wrap">
         <strong class="article-nav-caption">下一篇</strong>
         <p class="article-nav-title">
         
@@ -404,10 +404,10 @@ window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMin
                     <li>
                         
                         <div class="item-thumbnail">
-                            <a href="/2017/04/23/ElasticSearch内部机制浅析三/" class="thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
     
     
-        <span style="background-image:url(/2017/04/23/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
     
     
 </a>
@@ -416,8 +416,8 @@ window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMin
                         
                         <div class="item-inner">
                             <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
-                            <p class="item-title"><a href="/2017/04/23/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
-                            <p class="item-date"><time datetime="2017-04-23T09:00:15.000Z" itemprop="datePublished">2017-04-23</time></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
                         </div>
                     </li>
                 
