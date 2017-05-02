@@ -19,7 +19,7 @@ ShardShard 实际上是一个 Lucene 的一个实例（Lucene Index），但往�
 废话不多说，进入正题。
 ShardShard 实际上是一个 Lucene 的一个实例（Lucene Index），但往往一个 Elastic Index 都是由多个 Shards （primary &amp;amp; replica）">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg">
-<meta property="og:updated_time" content="2017-05-02T02:56:22.000Z">
+<meta property="og:updated_time" content="2017-05-02T04:12:35.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ElasticSearch 内部机制浅析（三）">
 <meta name="twitter:description" content="前言上篇从分布式的角度阐述了 ES 的分布式设计和思想，这一篇打算与 Lucene 结合起来，摸透一些 ES 的常遇到的概念，我们可以将了解到的这些东西应用到优化实践中去。
@@ -227,6 +227,11 @@ var _hmt = _hmt || [];
 <li>某个字段的脚本执行。等等。</li>
 </ul>
 <p><code>doc_value</code>是顺序存储到磁盘的，因此访问是很快的。当我们所处理的集合小于所给的 JVM 堆内存，那么整个数据集合是会被加载到内存里的；如果数据集合大于所给的堆内存，那么就会分页加载到内存之中，而不会报出『OutOfMemory Error』。</p>
+<p>值得一提的是，<code>doc_value</code>的字段使用极其频繁，因此在5.x 版本后强化成为两个字段，分别是 text 和 keyword。</p>
+<ul>
+<li><code>text</code>：string 类型，支持倒排索引，不支持 <code>doc_value</code>；</li>
+<li><code>keyword</code>：string 类型，不支持倒排索引，支持<code>doc_value</code>。</li>
+</ul>
 <h2 id="父子关系树构建"><a href="#父子关系树构建" class="headerlink" title="父子关系树构建"></a>父子关系树构建</h2><p>上面介绍了<code>doc_value</code>，有个很重要的应用便是利用<code>doc_value</code>构建父子关系的树。这里说的父和子实际上是两个独立的 document，所以和嵌套对象（nested objects）是不一样的，关于嵌套对象会在未来的文章里叙述。这样父子节点独立存储的好处是，父与子之间的更新或者增加节点都不会相互影响，也不需要重建索引。<br>那么 ES 是如何构建父子树呢？<br>ES 通过<code>doc_value</code>维护了一套父子关系，类似如下数据组织方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">Doc    _id      parentId</div><div class="line">-----------------------------------------------------------------</div><div class="line">Doc_1 | 1 |</div><div class="line">Doc_2 | 2 | 1</div><div class="line">Doc_3 | 3 | 1</div><div class="line">-----------------------------------------------------------------</div></pre></td></tr></table></figure></p>
 <p>这一套数据之前提及过，是在内存里维护的（当然数据超出内存大小后是可以做分页的），而这就意味着：<br><strong>父节点和其所有子节点必须在同一个 shard 之中！</strong></p>
 <h2 id="时间序列数据库（TSDB）"><a href="#时间序列数据库（TSDB）" class="headerlink" title="时间序列数据库（TSDB）"></a>时间序列数据库（TSDB）</h2><p>从上面的参数我们引出这么一个问题，如何利用 ES 做 TSDB（时序数据库）？</p>
