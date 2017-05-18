@@ -25,7 +25,7 @@ Table ： 表即文件，以下介绍的都是表内元素
 Row Key 行键：可以理解为一个单元数据的 ID
 Column Families 列族 ： 定义表的时候需要">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
-<meta property="og:updated_time" content="2017-05-18T07:08:05.000Z">
+<meta property="og:updated_time" content="2017-05-18T07:54:15.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="初涉 HBase">
 <meta name="twitter:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
@@ -226,9 +226,9 @@ var _hmt = _hmt || [];
 <li>client 从 zk 里拿 Meta table的访问地址并访问 Meta table；</li>
 <li>client 依据 Meta table 查到 row key想访问的那一个 region server A，并且将其meta缓存起来；</li>
 <li>从这个 region server A 中获取到 row key 对应的 行（Row）；</li>
-<li>之后的查询都是从 client 缓存读取 meta 信息从对应的 region server 查询；(如果缓存中查询不到对应的数据那么将从第一步重新开始)<br><img src="/2017/04/13/初涉HBase/metadata.png" alt="metadata"><br>metatable 维护了一个 B 树结构。</li>
+<li>之后的查询都是从 client 缓存读取 meta 信息从对应的 region server 查询；(如果缓存中查询不到对应的数据那么将从第一步重新开始)<br><img src="/2017/04/13/初涉HBase/metadata.png" alt="MetaData 相当于是路由表"></li>
 </ol>
-<h2 id="HFiles-数据结构（重点）"><a href="#HFiles-数据结构（重点）" class="headerlink" title="HFiles 数据结构（重点）"></a>HFiles 数据结构（重点）</h2><p><img src="/2017/04/13/初涉HBase/hfiles3.png" alt="hfiles3"><br>逻辑上包含以下几个部分：</p>
+<h2 id="HFiles-数据结构（重点）"><a href="#HFiles-数据结构（重点）" class="headerlink" title="HFiles 数据结构（重点）"></a>HFiles 数据结构（重点）</h2><p><img src="/2017/04/13/初涉HBase/hfiles3.png" alt="HFile 逻辑结构"><br>逻辑上包含以下几个部分：</p>
 <ul>
 <li><strong>Scanned block section</strong>: 在 HBase 顺序扫描 HFiles 的时候需要被读取的块内容；</li>
 <li><strong>Non-scanned block section</strong>: 在 HBase 顺序扫描 HFiles 的时候不会被读取的块内容，主要包括Meta Block和Intermediate Level Data Index Blocks两部分；</li>
@@ -241,8 +241,7 @@ var _hmt = _hmt || [];
 <li>HFile 内置了一个 B+ 树索引，当 RegionServer 启动后并且 HFile 被打开的时候，这个索引会被加载到 Block Cache 即内存里；</li>
 <li>Root index 指向 Intermediate Level Data Index Blocks；</li>
 <li>KeyValues 存储在增长中的队列中的数据块里，数据块可以指定大小，默认64k，数据块越大，顺序检索能力越强；数据块越小，随机读写能力越强，需要权衡；</li>
-<li>Intermediate Level Data Index Blocks 维护了每一个数据块的最后一个 key；</li>
-<li>根据Intermediate Level Data Index Blocks找到对应的叶子节点 leaf index，就可以找到数据（Data Block）了；</li>
+<li>Intermediate Level Data Index Blocks 指向 Leaf Index，这个索引包含了该数据块下的最后一个 key 值，根据这个 key 就可以确定需要检索的 Data Block了；</li>
 <li>支持 Bloom Filter（用于排除 没包含指定 rowkey 的 HFile） 与 Time Range Info（用于排除不在指定时间断的 HFile）；</li>
 </ul>
 <h2 id="合并读"><a href="#合并读" class="headerlink" title="合并读"></a>合并读</h2><ol>
