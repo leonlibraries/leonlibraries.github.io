@@ -25,7 +25,7 @@ Table ： 表即文件，以下介绍的都是表内元素
 Row Key 行键：可以理解为一个单元数据的 ID
 Column Families 列族 ： 定义表的时候需要">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/13/初涉HBase/datastructure1.jpg">
-<meta property="og:updated_time" content="2017-05-24T02:25:22.000Z">
+<meta property="og:updated_time" content="2017-05-24T04:06:16.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="初涉 HBase">
 <meta name="twitter:description" content="背景HBase 基于 Google 的 Bigtable 思想， 附属于 Hadoop 的生态之下，是一个分布式、可扩展、大存储的数据库实现。当你需要随机且实时读写于你的大数据之间，选择 HBase 将会十分受用。
@@ -277,13 +277,8 @@ var _hmt = _hmt || [];
 <li>可以利用列标识来存储数据，例如可以将 A 用户的关注者放到一个 Column Families 中维护，每新增一个关注者就添加一个列标识（Column Qualify）;</li>
 <li>列标识命名长度和列族名字长度都会影响 IO 读写性能，因此应该命名越简洁越好！</li>
 </ul>
-<p><strong>推荐阅读：</strong></p>
-<ul>
-<li><a href="https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko" target="_blank" rel="external">https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko</a></li>
-<li><a href="https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/" target="_blank" rel="external">https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/</a></li>
-<li><a href="http://hbasefly.com/" target="_blank" rel="external">http://hbasefly.com/</a></li>
-<li><a href="http://hbase.apache.org/book.html#_preface" target="_blank" rel="external">http://hbase.apache.org/book.html#_preface</a></li>
-</ul>
+<p>Further Reading:</p>
+<p><a href="https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko" target="_blank" rel="external">https://mapr.com/blog/in-depth-look-hbase-architecture/#.VdMxvWSqqko</a><br><a href="https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/" target="_blank" rel="external">https://hortonworks.com/blog/apache-hbase-region-splitting-and-merging/</a><br><a href="http://hbasefly.com/" target="_blank" rel="external">http://hbasefly.com/</a><br><a href="http://hbase.apache.org/book.html#_preface" target="_blank" rel="external">http://hbase.apache.org/book.html#_preface</a></p>
 
         </div>
         <footer class="article-footer">

@@ -17,7 +17,7 @@ Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，�
 <meta property="og:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
 Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/cap.jpg">
-<meta property="og:updated_time" content="2017-04-28T01:25:53.000Z">
+<meta property="og:updated_time" content="2017-05-24T04:06:55.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ElasticSearch 内部机制浅析（二）">
 <meta name="twitter:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
@@ -275,16 +275,8 @@ var _hmt = _hmt || [];
 <p>ES 是怎么保证的是老版本数据绝对不会覆盖新版本呢？<br>大致是先读取需要被修改的记录的最新版本号，然后利用 CAS 算法将对记录做出修改，一旦修改成功，就会将数据平行拷贝到各个节点做副本。因为考虑到某些 replica 同步的过程是平行且异步化的，当更新十分频繁的时候，数据的先来后到谁都说不准，因此对于每个 Document，ES 都会指定一个<code>_version</code>字段存储版本号，而这个版本号会随着 document 的每次变更而自增，每一个新的数据都有着固定的版本号，用以标识数据的先来后到，老版本无法覆盖新版本，这就确保分片之间的数据不会出现不一致的情况，甚至可以避免数据丢失。</p>
 <h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>CP？AP？这或许并不是那么重要，但是我很看重这样的思考过程，哪怕是没有结果，在这个过程里可以增进对 ES 的认知和理解，而不会单纯将一个分布式系统简单归纳为 AP 还是 CP。<br>但不得不说，ES 还是非常适合 AP 场景的，并且他的 TransLog 机制对数据的最终一致性也有很强有力的保障。</p>
 <p>之后还会继续更新 ES 的相关文章，To Be Continued…</p>
-<p>推荐阅读：</p>
-<ul>
-<li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html</a></li>
-<li><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html</a></li>
-<li><a href="http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02" target="_blank" rel="external">http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02</a></li>
-<li><a href="https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html</a></li>
-<li><a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank" rel="external">https://en.wikipedia.org/wiki/Optimistic_concurrency_control</a></li>
-<li><a href="https://zh.wikipedia.org/wiki/CAP定理" target="_blank" rel="external">https://zh.wikipedia.org/wiki/CAP定理</a></li>
-</ul>
+<p>Further Reading:</p>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html</a><br><a href="http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02" target="_blank" rel="external">http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html</a><br><a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank" rel="external">https://en.wikipedia.org/wiki/Optimistic_concurrency_control</a><br><a href="https://zh.wikipedia.org/wiki/CAP定理" target="_blank" rel="external">https://zh.wikipedia.org/wiki/CAP定理</a></p>
 
         </div>
         <footer class="article-footer">
