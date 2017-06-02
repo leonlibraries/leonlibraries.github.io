@@ -17,7 +17,7 @@ LSM Tree 是什么所谓 LSM（The Log-Structured Merge-Tree），即日志结�
 <meta property="og:description" content="之前的文章 《初涉 HBase》 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。
 LSM Tree 是什么所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/05/18/从LSM到HBase/LSM_Tree.png">
-<meta property="og:updated_time" content="2017-05-24T04:05:39.000Z">
+<meta property="og:updated_time" content="2017-05-24T05:58:25.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="从 LSM Tree 到 HBase">
 <meta name="twitter:description" content="之前的文章 《初涉 HBase》 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。
@@ -179,7 +179,7 @@ var _hmt = _hmt || [];
 <h2 id="LSM-Tree-是什么"><a href="#LSM-Tree-是什么" class="headerlink" title="LSM Tree 是什么"></a>LSM Tree 是什么</h2><p>所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据的结构组成的，每一个数据结构各自对应自己的存储介质。</p>
 <h2 id="简易模型描述"><a href="#简易模型描述" class="headerlink" title="简易模型描述"></a>简易模型描述</h2><p>最简单的 LSM 模型是是被 <a href="https://en.wikipedia.org/wiki/Patrick_O%27Neil" target="_blank" rel="external">Patrick O’Neil</a> 提出来的『Two-Level LSM Tree』。这个简易数据结构是由两个树状结构构成，这两颗树分别为 C0 和 C1。C0 比较小，并且全部驻于内存之中，而 C1 则驻于磁盘。一条新的记录先是从 C0 中插入，如果这一次的插入造成了 C0 数据量超出了阀值，那么 C0 中的某些数据片段则会迁出并合并到 C1 树中。其<a href="https://en.wikipedia.org/wiki/Merge_sort" target="_blank" rel="external">合并排序算法</a>是批量的，由于是顺序存储，速度相当快。</p>
 <p>然而通常情况下，每次持久化到硬盘中是一条独立的线程做的，并且生成单独的文件，因此C1树也不止一个文件，当文件数变多的时候，势必导致每一次查询都会涉及到大量文件的打开，每一次文件的打开都是对 I/O 的消耗。为了控制这种 <strong>读放大</strong> 的情况出现，LSM Tree 必须要考虑小文件合并的问题。</p>
-<h2 id="三层模型与合并算法"><a href="#三层模型与合并算法" class="headerlink" title="三层模型与合并算法"></a>三层模型与合并算法</h2><p><img src="/2017/05/18/从LSM到HBase/LSM_Tree.png" alt="LSM 合并文件三层模型"></p>
+<h2 id="三层模型与合并算法-Leveled-Compaction"><a href="#三层模型与合并算法-Leveled-Compaction" class="headerlink" title="三层模型与合并算法 (Leveled Compaction)"></a>三层模型与合并算法 (Leveled Compaction)</h2><p><img src="/2017/05/18/从LSM到HBase/LSM_Tree.png" alt="LSM 合并文件三层模型"></p>
 <p>三层模型合并算法只是 LSM 合并算法中的一种。</p>
 <p>简单来说，SSTable（Sorted String Table） 的存储是分层的（后续介绍 SSTable 的具体模型），Level 0 中，数据在内存里，往往是以树的结构来展现，当达到一定阀值的时候，其数据以 key 值作为索引，并排列成有序的数据持久化到磁盘上，每个线程在磁盘上对应一个独立的文件或者是一个 key 序列范围的文件集合。如果要执行一次搜索，每一个线程都需要在 Level 0 涉及到的文件中根据指定 key 查相关值。当文件数膨胀之后，每一次 Key 查询将会打开大量的文件（同个 key 可能存在于多个文件中），涉及到大量的 I/O 交互，这样性能很差。这里的检索算法复杂度通常为<code>O(Klg(n))</code> K 为文件打开数。</p>
 <p>在 Level 0 中一个特定的 key 可能会出现在多个不同的文件中（不同版本），大多数应用里都是默认取最新版本的 key-value 数据。而对于 Cassandra 来说，每个 value 对应的是数据库里的一行，而不同版本则对应数据的不同字段。因此查询中可能还需要带版本号查出对应的值，避免不了打开多个文件逐一校对。</p>
