@@ -23,7 +23,7 @@ Docker 版本:">
 环境四台机器（CentOS7.1）1234192.168.80.23  (master)192.168.80.24192.168.80.25192.168.80.26
 Docker 版本:">
 <meta property="og:image" content="https://leonlibraries.github.io/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg">
-<meta property="og:updated_time" content="2017-06-16T01:40:52.000Z">
+<meta property="og:updated_time" content="2017-06-16T01:51:41.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubeadm 搭建 Kubernetes 集群">
 <meta name="twitter:description" content="Overview
@@ -269,7 +269,7 @@ var _hmt = _hmt || [];
 </table>
 <h5 id="解除防火墙限制"><a href="#解除防火墙限制" class="headerlink" title="解除防火墙限制"></a>解除防火墙限制</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">vim /etc/sysctl.conf</div><div class="line"></div><div class="line">net.bridge.bridge-nf-call-ip6tables = 1</div><div class="line">net.bridge.bridge-nf-call-iptables = 1</div></pre></td></tr></table></figure>
 <p>接着<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sysctl -p</div></pre></td></tr></table></figure></p>
-<h5 id="初始化集群"><a href="#初始化集群" class="headerlink" title="初始化集群"></a>初始化集群</h5><p>我们用 Flannel 作为 Docker 跨 Host 的网络方案，这里初始化的时候要注意多带个参数（如果用其他网络方案无需携带这个参数）</p>
+<h5 id="初始化集群"><a href="#初始化集群" class="headerlink" title="初始化集群"></a>初始化集群</h5><p>我们用 Flannel 作为 Docker 跨 Host 的网络方案，这里初始化的时候要注意多带个参数<code>--pod-network-cidr=10.244.0.0/16</code>（如果用其他网络方案无需携带这个参数）</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">kubeadm init --pod-network-cidr=10.244.0.0/16</div></pre></td></tr></table></figure>
 <p>很快，初始化完成，你将会看到这样的信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">Your Kubernetes master has initialized successfully!</div><div class="line"></div><div class="line">To start using your cluster, you need to run (as a regular user):</div><div class="line"></div><div class="line">  sudo cp /etc/kubernetes/admin.conf $HOME/</div><div class="line">  sudo chown $(id -u):$(id -g) $HOME/admin.conf</div><div class="line">  export KUBECONFIG=$HOME/admin.conf</div><div class="line"></div><div class="line">You should now deploy a pod network to the cluster.</div><div class="line">Run &quot;kubectl apply -f [podnetwork].yaml&quot; with one of the options listed at:</div><div class="line">  http://kubernetes.io/docs/admin/addons/</div><div class="line"></div><div class="line">You can now join any number of machines by running the following on each node</div><div class="line">as root:</div><div class="line"></div><div class="line">  kubeadm join --token c006b2.4a5ec28edccfe8e3 192.168.80.23:6443</div></pre></td></tr></table></figure></p>
 <p>记得要把 token 保留下来，后续增加机器节点需要用到。</p>
@@ -299,7 +299,7 @@ var _hmt = _hmt || [];
 <p>我们可以看到 front-end 模块绑定的 nodePort 是 30001</p>
 <p><img src="/2017/06/15/Kubeadm搭建Kubernetes集群/nodeport.jpeg" alt=""></p>
 <p>访问 <a href="http://192.168.80.25:30001" target="_blank" rel="external">http://192.168.80.25:30001</a> 即可看到如下画面<br><img src="/2017/06/15/Kubeadm搭建Kubernetes集群/sockshop.jpeg" alt=""></p>
-<p>如果基本加购物车功能能够跑通，就说明集群搭建成功，没毛病。</p>
+<p>如果加购物车功能能够跑通，就说明集群搭建成功，没毛病。</p>
 <h3 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h3><p>安装过程中不免遇到一些障碍，这里稍作总结：</p>
 <h5 id="Q1"><a href="#Q1" class="headerlink" title="Q1"></a>Q1</h5><p>Kubeadm init 过程中卡在 <code>[apiclient] Created API client, waiting for the control plane to become ready</code> 这句话十分长时间，这个时候通过命令<code>sudo journalctl -r -u kubelet</code>发现日志有这么一句话：<br><code>kubelet cgroup driver: &quot;cgroupfs&quot; is different from docker cgroup driver: “systemd&quot;</code></p>
 <p>解决办法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf</div></pre></td></tr></table></figure></p>
