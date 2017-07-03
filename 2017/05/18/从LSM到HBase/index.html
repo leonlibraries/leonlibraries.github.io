@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>从 LSM Tree 到 HBase | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="大数据,HBase,分布式算法,LSM" />
+    
+    <meta name="description" content="之前的文章 《初涉 HBase》 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。
+LSM Tree 是什么所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从 LSM Tree 到 HBase">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/05/18/从LSM到HBase/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="之前的文章 《初涉 HBase》 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。
+LSM Tree 是什么所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/05/18/从LSM到HBase/LSM_Tree.png">
+<meta property="og:updated_time" content="2017-05-24T05:58:25.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="从 LSM Tree 到 HBase">
+<meta name="twitter:description" content="之前的文章 《初涉 HBase》 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。
+LSM Tree 是什么所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/05/18/从LSM到HBase/LSM_Tree.png">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/分布式理论/">分布式理论</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-从LSM到HBase" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        从 LSM Tree 到 HBase
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2017/05/18/从LSM到HBase/" class="article-date">
+            <time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/HBase/">HBase</a>, <a class="tag-link" href="/tags/LSM/">LSM</a>, <a class="tag-link" href="/tags/分布式算法/">分布式算法</a>, <a class="tag-link" href="/tags/大数据/">大数据</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p>之前的文章 <a href="https://leonlibraries.github.io/2017/04/13/初涉HBase/">《初涉 HBase》</a> 初步介绍了 HBase 底层逻辑，包括 HBase 的基础架构、读写数据流程以及表设计要注意的一些要点。这篇文章着重从 LSM Tree 的角度介绍 LevelDB 的经典实现，并以此为切入点加深对 HBase 的认知。</p>
+<h2 id="LSM-Tree-是什么"><a href="#LSM-Tree-是什么" class="headerlink" title="LSM Tree 是什么"></a>LSM Tree 是什么</h2><p>所谓 LSM（The Log-Structured Merge-Tree），即日志结构合并树，是由两个或两个以上存储数据的结构组成的，每一个数据结构各自对应自己的存储介质。</p>
+<h2 id="简易模型描述"><a href="#简易模型描述" class="headerlink" title="简易模型描述"></a>简易模型描述</h2><p>最简单的 LSM 模型是是被 <a href="https://en.wikipedia.org/wiki/Patrick_O%27Neil" target="_blank" rel="external">Patrick O’Neil</a> 提出来的『Two-Level LSM Tree』。这个简易数据结构是由两个树状结构构成，这两颗树分别为 C0 和 C1。C0 比较小，并且全部驻于内存之中，而 C1 则驻于磁盘。一条新的记录先是从 C0 中插入，如果这一次的插入造成了 C0 数据量超出了阀值，那么 C0 中的某些数据片段则会迁出并合并到 C1 树中。其<a href="https://en.wikipedia.org/wiki/Merge_sort" target="_blank" rel="external">合并排序算法</a>是批量的，由于是顺序存储，速度相当快。</p>
+<p>然而通常情况下，每次持久化到硬盘中是一条独立的线程做的，并且生成单独的文件，因此C1树也不止一个文件，当文件数变多的时候，势必导致每一次查询都会涉及到大量文件的打开，每一次文件的打开都是对 I/O 的消耗。为了控制这种 <strong>读放大</strong> 的情况出现，LSM Tree 必须要考虑小文件合并的问题。</p>
+<h2 id="三层模型与合并算法-Leveled-Compaction"><a href="#三层模型与合并算法-Leveled-Compaction" class="headerlink" title="三层模型与合并算法 (Leveled Compaction)"></a>三层模型与合并算法 (Leveled Compaction)</h2><p><img src="/2017/05/18/从LSM到HBase/LSM_Tree.png" alt="LSM 合并文件三层模型"></p>
+<p>三层模型合并算法只是 LSM 合并算法中的一种。</p>
+<p>简单来说，SSTable（Sorted String Table） 的存储是分层的（后续介绍 SSTable 的具体模型），Level 0 中，数据在内存里，往往是以树的结构来展现，当达到一定阀值的时候，其数据以 key 值作为索引，并排列成有序的数据持久化到磁盘上，每个线程在磁盘上对应一个独立的文件或者是一个 key 序列范围的文件集合。如果要执行一次搜索，每一个线程都需要在 Level 0 涉及到的文件中根据指定 key 查相关值。当文件数膨胀之后，每一次 Key 查询将会打开大量的文件（同个 key 可能存在于多个文件中），涉及到大量的 I/O 交互，这样性能很差。这里的检索算法复杂度通常为<code>O(Klg(n))</code> K 为文件打开数。</p>
+<p>在 Level 0 中一个特定的 key 可能会出现在多个不同的文件中（不同版本），大多数应用里都是默认取最新版本的 key-value 数据。而对于 Cassandra 来说，每个 value 对应的是数据库里的一行，而不同版本则对应数据的不同字段。因此查询中可能还需要带版本号查出对应的值，避免不了打开多个文件逐一校对。</p>
+<p>三层模型就是从性能角度考虑，将小文件合并成大文件，且除了 Level 0 以外的数据的 key 值是不允许有交集的。</p>
+<blockquote>
+<p><strong>tips</strong>:当然三层合并算法并非适用所有业务场景，对于简单的写场景，或者说少量涉及到重复 key 值写操作的场景，可以采用更简单的合并算法，如简单监测文件数量阀值进行合并等。</p>
+</blockquote>
+<h2 id="LevelDB-的-LSM-经典实现"><a href="#LevelDB-的-LSM-经典实现" class="headerlink" title="LevelDB 的 LSM 经典实现"></a>LevelDB 的 LSM 经典实现</h2><h4 id="SSTable-与三层模型"><a href="#SSTable-与三层模型" class="headerlink" title="SSTable 与三层模型"></a>SSTable 与三层模型</h4><p><img src="/2017/05/18/从LSM到HBase/xsstable.png" alt="sstable"></p>
+<blockquote>
+<p>SSTable is a simple abstraction to efficiently store large numbers of key-value pairs while optimizing for high throughput, sequential read/write workloads.</p>
+</blockquote>
+<p>而这里的 SSTable 并不是树结构，而是单纯的 KV 结构组成的序列，每一个 key 值的 offset 都存储于 index 之中。</p>
+<p>结合三层模型来看，Level 0 的 SSTable 就是 MemTable（ C0树 ）直接刷进磁盘的文件，<strong>允许出现 SSTable 的 key 有交集的情况</strong>；Level 1 这一层开始的每一个 key 不允许有交集，也就是说这里的处理逻辑是将 Level 0 中与 Level 1 中的 重复key 归并成新的文件到 Level 1。当触发文件个数的阀值时，Level 1 向上一层再进行合并。</p>
+<p>对数据每一层都要进行检索，找出默认的版本数据，通常默认为最新版本。</p>
+<blockquote>
+<p><strong>tips</strong>:Ln 与 Ln+1 也不应该有太多重复 key，否则性能也不会太好，因此这里建议设置一定的阀值，当 Ln 与 Ln+1 中的数据 key 重复超过某个阀值的时候，立马合并出新文件。</p>
+</blockquote>
+<h4 id="随机读写"><a href="#随机读写" class="headerlink" title="随机读写"></a>随机读写</h4><p>我们知道，随机读写是很吃磁盘 I/O 的，物理上来说要做到性能好的随机读写是很难的。然而如何通过 LSM Tree 来规避这个问题，达到随机读写性能优越的效果呢？LevelDB 是这么约束的。</p>
+<p><img src="/2017/05/18/从LSM到HBase/readwrite.png" alt="读写流程"></p>
+<p>1.磁盘上的 SSTable 索引需要永远加载在内存里；<br>2.所有写操作，直接写 MemTable （写文件缓存，即内存，保证随机写入速度）；<br>3.读数据的时候先从 MemTable 检索，然后再从 SSTable 的索引中检索；<br>4.MemTable 周期性 flush 到磁盘中；<br>5.SSTables 周期性合并；<br>6.落盘的数据不可变更，更新和删除操作并不是真正的物理修改和删除，只是增加版本号。</p>
+<p>写是写内存，因此随机写十分快；读也是读内存里的 SSTable 的索引，并且这里每一个SSTable索引如果用二分法查找，算法复杂度大致在 <code>O(lg(n))</code>与<code>O(n)</code>之间，因此随机读也不慢。</p>
+<p>这就是 LevelDB 对 LSM 的经典实现，可以看出，LSM Tree 并不一定维持树结构，甚至可以是与树结构本身无关。</p>
+<h2 id="HBase-的-LSM-实现"><a href="#HBase-的-LSM-实现" class="headerlink" title="HBase 的 LSM 实现"></a>HBase 的 LSM 实现</h2><p>HBase 则和上边的类似，把 HBase 套用到 LSM 中，Memstore 就是上边的 Memtable，HFiles 就是上边的 SSTables，除此之外，HBase 也和上边对比有一些区别。</p>
+<h4 id="WAL-预写日志支持"><a href="#WAL-预写日志支持" class="headerlink" title="WAL 预写日志支持"></a>WAL 预写日志支持</h4><p>类似与 binlog 的作用，在写入 MemTable 之前，往 WAL 写入日志，避免宕机出现的数据丢失的情况发生。因此 HBase 算是一个不错的可靠性存储。<br>这里有个很有趣的地方，某些测试环境下，机械硬盘的顺序写性能会高于对内存的随机写。因此 WAL 的写入性能是非常可观的，我们不必对此过于介怀。</p>
+<h4 id="Minor-vs-Major-Compaction"><a href="#Minor-vs-Major-Compaction" class="headerlink" title="Minor vs Major Compaction"></a>Minor vs Major Compaction</h4><p>关于 HBase Compaction，这里有一篇不错的文章<a href="http://hadoop-hbase.blogspot.com/2014/07/about-hbase-flushes-and-compactions.html" target="_blank" rel="external">《About HBase flushes and compactions》</a>，这篇文章告诉我们为什么要做 Compaction，以及如何通过参数来控制 Compaction 的时机和粒度。<br>接下来我们来看看 HBase 的两种 Compaction 策略，</p>
+<ul>
+<li>Minor Compaction： 根据配置策略，自动检查小文件，合并到大文件，从而减少碎片文件，然而并不会立马删除掉旧 HFile 文件；</li>
+<li>Major Compaction： 每个 CF 中，不管有多少个 HFiles 文件，最终都是将 HFiles 合并到一个大的 HFile 中，并且把所有的旧 HFile 文件删除，即CF 与 HFile 最终变成一一对应的关系。</li>
+</ul>
+<p>合并的策略都已经是参数化的。</p>
+<h3 id="BlockCache"><a href="#BlockCache" class="headerlink" title="BlockCache"></a>BlockCache</h3><p>除了 MemStore（也就是 MemTable） 以外，HBase 还提供了另一种缓存结构，BlockCache。</p>
+<blockquote>
+<p>在介绍BlockCache之前，简单地回顾一下HBase中Block的概念，详细介绍戳这里。 Block是HBase中最小的数据存储单元，默认为64K，在建表语句中可以通过参数BlockSize指定。HBase中Block分为四种类型：Data Block，Index Block，Bloom Block和Meta Block。其中Data Block用于存储实际数据，通常情况下每个Data Block可以存放多条KeyValue数据对；Index Block和Bloom Block都用于优化随机读的查找路径，其中Index Block通过存储索引数据加快数据查找，而Bloom Block通过一定算法可以过滤掉部分一定不存在待查KeyValue的数据文件，减少不必要的IO操作；Meta Block主要存储整个HFile的元数据。</p>
+</blockquote>
+<p>BlockCache 本质上是将热数据放到内存里维护起来，避免 Disk I/O，当然即使 BlockCache 找不到数据还是可以去 MemStore 中找的，只有两边都不存在数据的时候，才会读内存里的 HFile 索引寻址到硬盘，进行一次 I/O 操作。简单来说 LRUBlockCache 是将缓存维护在 JVM Heap 中，实际上 GC 的时候会对其产生影响，于是 HBase 将缓存放到了堆外维护 ，诞生了 SlabCache ，然而 SlabCache 不但不能解决问题反而制造了问题（导致内存使用率变低），已经被淘汰了。阿里大牛经过 SlabCache 的启示开发了 BucketCache，解决了 HBase BlockCache 所面临的痛点，HBase 将 BucketCache 和 LRUBlockCache 搭配使用，称之为 CombinedBlockCache。和之前不一样，系统在LRUBlockCache中主要存储Index Block和Bloom Block，而将Data Block存储在BucketCache中。因此一次随机读需要首先在LRUBlockCache中查到对应的Index Block，然后再到BucketCache查找对应数据块。</p>
+<p>关于 BlockCache 参考这两篇文章：<br><a href="http://hbasefly.com/2016/04/08/hbase-blockcache-1/" target="_blank" rel="external">http://hbasefly.com/2016/04/08/hbase-blockcache-1/</a><br><a href="http://hbasefly.com/2016/04/26/hbase-blockcache-2/" target="_blank" rel="external">http://hbasefly.com/2016/04/26/hbase-blockcache-2/</a><br><a href="https://issues.apache.org/jira/browse/HBASE-11323" target="_blank" rel="external">https://issues.apache.org/jira/browse/HBASE-11323</a></p>
+<h3 id="HFile-的数据结构"><a href="#HFile-的数据结构" class="headerlink" title="HFile 的数据结构"></a>HFile 的数据结构</h3><p><img src="/2017/05/18/从LSM到HBase/hfile.png" alt="HFile"><br>可以看出这里维护的是一个 B 树结构，与 LevelDB 实现的 SSTables 数据结构是不一样的，关于这里的介绍可以参考上一篇文章 <a href="https://leonlibraries.github.io/2017/04/13/初涉HBase/">《初涉 HBase》</a></p>
+<p>关于 HFile 也可以看看：<br><a href="http://hbasefly.com/2016/03/25/hbase-hfile/" target="_blank" rel="external">http://hbasefly.com/2016/03/25/hbase-hfile/</a></p>
+<h3 id="Bloom-Filter"><a href="#Bloom-Filter" class="headerlink" title="Bloom Filter"></a>Bloom Filter</h3><p>上边的 HFile 文件中包含了一个 Bloom Block，这个是用来做布隆过滤的。Bloom Block 的数据是在启动的时候就已经加载到内存里，除了 Block Cache 和 MemStore 以外，这个也对 HBase 随机读性能的优化起着至关重要的作用。<br>生成 HFile 的时候，会将 key 经过三次 hash 最终落到 Bloom Block 位数组的某三位上，并将其由0更改成1，以此标记该 key 的确存在这个 HFile 文件之中，查询的时候不需要将文件打开并检索，避免了一次 I/O 操作。然而随着 HFile 的膨胀，Bloom Block会越来越大。<br><img src="/2017/05/18/从LSM到HBase/BloomFilter.png" alt="HFile 包含x 和 y 两个数据的情况"><br>关于 Bloom Filter 可以看这：<br><a href="http://hbasefly.com/2016/03/25/hbase-hfile/" target="_blank" rel="external">http://hbasefly.com/2016/03/25/hbase-hfile/</a></p>
+<p>Further Reading:</p>
+<p><a href="https://en.wikipedia.org/wiki/Log-structured_merge-tree" target="_blank" rel="external">https://en.wikipedia.org/wiki/Log-structured_merge-tree</a><br><a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.44.2782&amp;rep=rep1&amp;type=pdf" target="_blank" rel="external">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.44.2782&amp;rep=rep1&amp;type=pdf</a><br><a href="https://ggaaooppeenngg.github.io/zh-CN/2017/03/31/从朴素解释出发解释leveldb的设计/" target="_blank" rel="external">https://ggaaooppeenngg.github.io/zh-CN/2017/03/31/从朴素解释出发解释leveldb的设计/</a><br><a href="https://blog.acolyer.org/2014/11/26/the-log-structured-merge-tree-lsm-tree/" target="_blank" rel="external">https://blog.acolyer.org/2014/11/26/the-log-structured-merge-tree-lsm-tree/</a><br><a href="https://www.quora.com/How-does-the-Log-Structured-Merge-Tree-work" target="_blank" rel="external">https://www.quora.com/How-does-the-Log-Structured-Merge-Tree-work</a><br><a href="http://hadoop-hbase.blogspot.com/2014/07/about-hbase-flushes-and-compactions.html" target="_blank" rel="external">http://hadoop-hbase.blogspot.com/2014/07/about-hbase-flushes-and-compactions.html</a><br><a href="http://hbasefly.com/2016/04/08/hbase-blockcache-1/" target="_blank" rel="external">http://hbasefly.com/2016/04/08/hbase-blockcache-1/</a><br><a href="http://hbasefly.com/2016/04/26/hbase-blockcache-2/" target="_blank" rel="external">http://hbasefly.com/2016/04/26/hbase-blockcache-2/</a><br><a href="https://issues.apache.org/jira/browse/HBASE-11323" target="_blank" rel="external">https://issues.apache.org/jira/browse/HBASE-11323</a><br><a href="http://hbasefly.com/2016/03/25/hbase-hfile/" target="_blank" rel="external">http://hbasefly.com/2016/03/25/hbase-hfile/</a></p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            Kubeadm 搭建 Kubernetes 集群
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2017/04/27/ElasticSearch内部机制浅析三/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">ElasticSearch 内部机制浅析（三）</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/05/18/从LSM到HBase/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

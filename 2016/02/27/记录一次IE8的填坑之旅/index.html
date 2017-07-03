@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>记录一次IE8的填坑之旅 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="web前端,StupidIE,图片搜索,干货" />
+    
+    <meta name="description" content="业务需求分析简单来说，需在前端实现搜索图片的交互。流程来看，无非先本地选中图片，浏览器端用户可以对图片进行相应的裁剪，将裁剪后的参数和图片本身异步上传到服务器，后台分析图片信息，裁剪图片上传，确认上传完毕后，再让前端以GET的形式跳转到搜图结果页面，完成搜索。本文只讨论前端实现。
+我的做法 (环境是jQuery)用户点击搜图按钮的时候，加载一个全新的Form表单，并且将其隐藏
+1234&amp;lt;f">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记录一次IE8的填坑之旅">
+<meta property="og:url" content="https://leonlibraries.github.io/2016/02/27/记录一次IE8的填坑之旅/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="业务需求分析简单来说，需在前端实现搜索图片的交互。流程来看，无非先本地选中图片，浏览器端用户可以对图片进行相应的裁剪，将裁剪后的参数和图片本身异步上传到服务器，后台分析图片信息，裁剪图片上传，确认上传完毕后，再让前端以GET的形式跳转到搜图结果页面，完成搜索。本文只讨论前端实现。
+我的做法 (环境是jQuery)用户点击搜图按钮的时候，加载一个全新的Form表单，并且将其隐藏
+1234&amp;lt;f">
+<meta property="og:image" content="https://leonlibraries.github.io/2016/02/27/记录一次IE8的填坑之旅/iexplorer.jpg">
+<meta property="og:updated_time" content="2017-01-24T08:41:16.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记录一次IE8的填坑之旅">
+<meta name="twitter:description" content="业务需求分析简单来说，需在前端实现搜索图片的交互。流程来看，无非先本地选中图片，浏览器端用户可以对图片进行相应的裁剪，将裁剪后的参数和图片本身异步上传到服务器，后台分析图片信息，裁剪图片上传，确认上传完毕后，再让前端以GET的形式跳转到搜图结果页面，完成搜索。本文只讨论前端实现。
+我的做法 (环境是jQuery)用户点击搜图按钮的时候，加载一个全新的Form表单，并且将其隐藏
+1234&amp;lt;f">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2016/02/27/记录一次IE8的填坑之旅/iexplorer.jpg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/前端那些事儿/">前端那些事儿</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-记录一次IE8的填坑之旅" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        记录一次IE8的填坑之旅
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2016/02/27/记录一次IE8的填坑之旅/" class="article-date">
+            <time datetime="2016-02-27T02:27:15.000Z" itemprop="datePublished">2016-02-27</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/StupidIE/">StupidIE</a>, <a class="tag-link" href="/tags/web前端/">web前端</a>, <a class="tag-link" href="/tags/图片搜索/">图片搜索</a>, <a class="tag-link" href="/tags/干货/">干货</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p><img src="/2016/02/27/记录一次IE8的填坑之旅/iexplorer.jpg" alt="StupidIE"></p>
+<h2 id="业务需求分析"><a href="#业务需求分析" class="headerlink" title="业务需求分析"></a>业务需求分析</h2><p>简单来说，需在前端实现搜索图片的交互。流程来看，无非先本地选中图片，浏览器端用户可以对图片进行相应的裁剪，将裁剪后的参数和图片本身异步上传到服务器，后台分析图片信息，裁剪图片上传，确认上传完毕后，再让前端以GET的形式跳转到搜图结果页面，完成搜索。本文只讨论前端实现。</p>
+<h2 id="我的做法-环境是jQuery"><a href="#我的做法-环境是jQuery" class="headerlink" title="我的做法 (环境是jQuery)"></a>我的做法 (环境是jQuery)</h2><p>用户点击搜图按钮的时候，加载一个全新的Form表单，并且将其隐藏</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">form</span> <span class="attr">id</span>=<span class="string">"my_form"</span> <span class="attr">style</span>=<span class="string">"display:none"</span></span></div><div class="line"> <span class="attr">enctype</span>=<span class="string">"multipart/form-data"</span>&gt;</div><div class="line">  <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"file"</span> <span class="attr">name</span>=<span class="string">"inputname"</span> <span class="attr">class</span>=<span class="string">"inputname"</span> <span class="attr">id</span>=<span class="string">"inputname"</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">form</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>在同一个回调方法体内，触发input file 的点击</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$(<span class="string">'#inputname'</span>).click();</div></pre></td></tr></table></figure>
+<p>此时用户浏览器将弹出一个资源窗口，选中具体的图片，点击确定后将触发绑定在<code>$(&#39;#inputname&#39;)</code>的change事件，事件回调中异步提交表单</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$(<span class="string">'#my_form'</span>).ajaxSubmit();<span class="comment">//伪代码，jQuery原生不支持</span></div></pre></td></tr></table></figure>
+<p>关于异步提交带文件的二进制表单，用jQuery原生并不能很好的实现，因此借助了<a href="https://developer.mozilla.org/en-US/docs/Web/API/FormData" title="FormData对象参考" target="_blank" rel="external">FormData</a>对象<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">$.ajax(&#123;</div><div class="line">    <span class="attr">url</span>: <span class="string">'http://yourdomain/upload'</span>,</div><div class="line">    <span class="attr">data</span>: <span class="keyword">new</span> FormData($(<span class="string">'#my_form'</span>)[<span class="number">0</span>]),</div><div class="line">    <span class="attr">method</span>: <span class="string">'post'</span>,</div><div class="line">    <span class="attr">dataType</span>: <span class="string">'json'</span>,</div><div class="line">    <span class="attr">processData</span>: <span class="literal">false</span>,</div><div class="line">    <span class="attr">contentType</span>: <span class="literal">false</span></div><div class="line">&#125;).done(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</div><div class="line">    alert(<span class="string">'OK'</span>);</div><div class="line">&#125;).fail(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    alert(<span class="string">'FAILED'</span>);</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<p>剩下回调后的处理我就不多说，也并非本文的重点。</p>
+<h2 id="遇到的问题"><a href="#遇到的问题" class="headerlink" title="遇到的问题"></a>遇到的问题</h2><p>既然是IE8填坑之旅，还是应该着重说说坑。理论上来讲，支持ES5规范的浏览器，在上述流程中都不会出现问题。然而IE8依旧有庞大的市场份额…</p>
+<h3 id="IE8的安全机制"><a href="#IE8的安全机制" class="headerlink" title="IE8的安全机制"></a>IE8的安全机制</h3><h4 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h4><p>由于表单是通过change事件回调函数里提交的，而触发change事件本身并非直接点击input file按钮并在资源窗口选择文件后触发的，而是间接通过点击其它DOM结构的回调中触发了input file 的点击事件。那么问题来了，IE8可能会把这个当做是非用户触发的事件，不允许进行任何表单提交操作。题外话，这个与<code>window.open(url,&#39;_blank&#39;)</code>的限制机制异曲同工。</p>
+<h4 id="解决思路"><a href="#解决思路" class="headerlink" title="解决思路"></a>解决思路</h4><p>因为之前没有任何处理IE8的经验，解决过程比较坎坷。<br>最简单的思路是，既然IE8对此有安全限制，那么是否有办法让用户直接点击input file，直接触发change事件回调，提交表单？<br>流程走下来固然可行，可是也有问题，我们都知道要想把input file控件的样式改成自己想要的样式，而且无法借助css3的前提下，是非常麻烦的，那么索性，同时也是借鉴淘宝的做法，把整个input file控件做成透明的，把自己预先定义好的按钮，或是字体，或是图片，统统放到透明控件下面，这样用户看到的是你定义的按钮或是icon，实际上点击的则是input file控件本身，没有半点违和感。<br>当然这么处理仍然不完美，我们都知道input file在IE8默认样式分两个部分，一部分是输入框，一部分是带有”浏览”字样的按钮，点击浏览按钮可以弹出资源窗口，而输入框则需要双击才能弹出资源窗口，那么如果你自定义的按钮或者icon比input file中”浏览”按钮大，如何能确保”浏览”按钮尺寸足够大不出错呢？这里有一个比较巧妙的办法，通过<code>font-size</code>属性可以把按钮撑大，然后通过css定位一下确保完全能够覆盖自己定义的范围就可以了。下面给出Demo。<br><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="selector-class">.inputname</span>&#123;</div><div class="line">    <span class="attribute">width</span>: <span class="number">600px</span>;</div><div class="line">    <span class="attribute">height</span>: <span class="number">600px</span>;</div><div class="line">    <span class="attribute">position</span>: absolute;</div><div class="line">    <span class="attribute">top</span>:<span class="number">0</span>;</div><div class="line">    <span class="attribute">right</span>: <span class="number">0px</span>;</div><div class="line">    <span class="attribute">z-index</span>: <span class="number">9999</span>;</div><div class="line">    <span class="attribute">display</span>: block;</div><div class="line">    <span class="attribute">cursor</span>: pointer;</div><div class="line">    <span class="attribute">font-size</span>: <span class="number">100px</span>;</div><div class="line">    <span class="attribute">-ms-filter</span>: progid:DXImageTransform.Microsoft.<span class="built_in">Alpha</span>(Opacity=0);</div><div class="line">    <span class="attribute">filter</span>: progid:DXImageTransform.Microsoft.<span class="built_in">Alpha</span>(Opacity=0);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="FormData不支持IE10以下的浏览器"><a href="#FormData不支持IE10以下的浏览器" class="headerlink" title="FormData不支持IE10以下的浏览器"></a>FormData不支持IE10以下的浏览器</h3><p><img src="/2016/02/27/记录一次IE8的填坑之旅/formdata.png" alt="FormData属性浏览器兼容表" title="FormData属性浏览器兼容表"></p>
+<h4 id="解决思路-1"><a href="#解决思路-1" class="headerlink" title="解决思路"></a>解决思路</h4><p>这个解决方式就比较简单了，很多overflowstack网友都推荐了一个轮子<a href="http://malsup.com/jquery/form/" title="jquery form 官网" target="_blank" rel="external">jquery.form.js</a>，参考了<a href="http://malsup.com/jquery/form/" title="jquery form 官网" target="_blank" rel="external">jquery.form.js</a>的源码以及其他声称自己能够完美兼容IE8的异步提交带文件的二进制表单的插件，我发现如果要在不支持FormData属性的浏览器环境中做到异步提交，大家的做法都很统一。<br>思路大概是表单提交的时候，预先在用户看不到的地方生成一个空白iframe，并将form的<code>target</code>属性设置为该空白iframe的<code>name</code>。<br>这样一来，表单提交后本页就不会跳转或刷新，返回的XML、JSON、PLAIN TEXT或是HTML的内容都会在空白iframe里加载出来，只需要开发者预先监听该iframe的<code>load</code>事件，并把iframe中加载出来的内容转换成所需要的数据格式进行判断就可以完成异步提交了。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//不是jQuery.form.js源码</span></div><div class="line">iframeObj.bind(<span class="string">"load"</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> contents = $(<span class="keyword">this</span>).contents().get(<span class="number">0</span>);</div><div class="line">    <span class="keyword">var</span> data = $(contents).find(<span class="string">'body'</span>).text();</div><div class="line">    <span class="keyword">if</span> (<span class="string">'json'</span> == options.dataType) &#123;</div><div class="line">        data = <span class="built_in">window</span>.eval(<span class="string">'('</span> + data + <span class="string">')'</span>);</div><div class="line">    &#125;</div><div class="line">    options.onSuccess(data);</div><div class="line">    iframeObj.remove();</div><div class="line">    form.remove();</div><div class="line">    iframeObj = <span class="literal">null</span>;</div><div class="line">&#125;);</div><div class="line"></div><div class="line">form.submit();</div></pre></td></tr></table></figure></p>
+<h3 id="IE8各种PolyFills"><a href="#IE8各种PolyFills" class="headerlink" title="IE8各种PolyFills"></a>IE8各种PolyFills</h3><p>由于各种浏览器ES规范不一致，因此就决定了每个项目或多或少都要写一些必要的PolyFills，同时也是为了获取更方便的开发体验。<br>项目在用的PolyFills(Object.bind函数和Array.filter函数)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * 针对ES兼容性的写法</div><div class="line"> */</div><div class="line"><span class="built_in">module</span>.exports = &#123;</div><div class="line">   <span class="attr">makePolyFill</span> : <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</div><div class="line">        <span class="keyword">if</span> (!<span class="built_in">Function</span>.prototype.bind) &#123;</div><div class="line">            <span class="built_in">Function</span>.prototype.bind = <span class="function"><span class="keyword">function</span> (<span class="params">oThis</span>) </span>&#123;</div><div class="line">                <span class="keyword">if</span> (<span class="keyword">typeof</span> <span class="keyword">this</span> !== <span class="string">'function'</span>) &#123;</div><div class="line">                    <span class="comment">// closest thing possible to the ECMAScript 5</span></div><div class="line">                    <span class="comment">// internal IsCallable function</span></div><div class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'Function.prototype.bind - what is trying to be bound is not callable'</span>);</div><div class="line">                &#125;</div><div class="line"></div><div class="line">                <span class="keyword">var</span> aArgs = <span class="built_in">Array</span>.prototype.slice.call(<span class="built_in">arguments</span>, <span class="number">1</span>),</div><div class="line">                    fToBind = <span class="keyword">this</span>,</div><div class="line">                    fNOP = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">                    &#125;,</div><div class="line">                    fBound = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">                        <span class="keyword">return</span> fToBind.apply(<span class="keyword">this</span> <span class="keyword">instanceof</span> fNOP &amp;&amp; oThis</div><div class="line">                                ? <span class="keyword">this</span></div><div class="line">                                : oThis,</div><div class="line">                            aArgs.concat(<span class="built_in">Array</span>.prototype.slice.call(<span class="built_in">arguments</span>)));</div><div class="line">                    &#125;;</div><div class="line"></div><div class="line">                fNOP.prototype = <span class="keyword">this</span>.prototype;</div><div class="line">                fBound.prototype = <span class="keyword">new</span> fNOP();</div><div class="line"></div><div class="line">                <span class="keyword">return</span> fBound;</div><div class="line">            &#125;;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (!<span class="built_in">Array</span>.prototype.filter) &#123;</div><div class="line">            <span class="built_in">Array</span>.prototype.filter = <span class="function"><span class="keyword">function</span> (<span class="params">fun <span class="regexp">/*, thisp */</span></span>) </span>&#123;</div><div class="line"><span class="meta">                "use strict"</span>;</div><div class="line"></div><div class="line">                <span class="keyword">if</span> (<span class="keyword">this</span> === <span class="keyword">void</span> <span class="number">0</span> || <span class="keyword">this</span> === <span class="literal">null</span>)</div><div class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>();</div><div class="line"></div><div class="line">                <span class="keyword">var</span> t = <span class="built_in">Object</span>(<span class="keyword">this</span>);</div><div class="line">                <span class="keyword">var</span> len = t.length &gt;&gt;&gt; <span class="number">0</span>;</div><div class="line">                <span class="keyword">if</span> (<span class="keyword">typeof</span> fun !== <span class="string">"function"</span>)</div><div class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>();</div><div class="line"></div><div class="line">                <span class="keyword">var</span> res = [];</div><div class="line">                <span class="keyword">var</span> thisp = <span class="built_in">arguments</span>[<span class="number">1</span>];</div><div class="line">                <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; len; i++) &#123;</div><div class="line">                    <span class="keyword">if</span> (i <span class="keyword">in</span> t) &#123;</div><div class="line">                        <span class="keyword">var</span> val = t[i]; <span class="comment">// in case fun mutates this</span></div><div class="line">                        <span class="keyword">if</span> (fun.call(thisp, val, i, t))</div><div class="line">                            res.push(val);</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line"></div><div class="line">                <span class="keyword">return</span> res;</div><div class="line">            &#125;;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>如果没有耐心，兼容问题根本处理不来。上世纪末到现在，我们经历了浏览器阵营的各种混战，实际上随着ES标准不断更迭，和各厂商的推进努力，浏览器兼容的问题相比以前容易处理很多。加之有许多优秀的CSS resets以及浏览器特性检测框架（如<code>Modernizr</code>），更抚慰了无数前端的小心脏。</p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="https://developer.mozilla.org/en-US/docs/Web/API/FormData" title="FormData对象参考" target="_blank" rel="external">FormData API</a>；<br><a href="http://malsup.com/jquery/form/" title="jQuery.form.js官网" target="_blank" rel="external">jQuery.form.js官网</a>；<br><a href="https://github.com/inexorabletash/polyfill/blob/master/es5.js" title="Github上不错的PolyFills" target="_blank" rel="external">Github上不错的PolyFills</a>；<br><a href="https://modernizr.com" title="modernizr官网" target="_blank" rel="external">modernizr官网</a>；</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2016/02/29/ECMAScript6主要是甜/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            ECMAScript6：主要是甜
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2016/02/27/记录一次IE8的填坑之旅/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Relay | React数据驱动层初探 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="web前端,React,Relay,前端组件化" />
+    
+    <meta name="description" content="Relay &amp;amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一个近乎完美的解决方案。
+什么是GraphQL呢？这是由facebook制定的定义在前端的数据查询语言规范（长的有点像JSON），来看一个官网例子123456789101112&amp;#123;  user(id: 3500401) &amp;#123;    id,    name,    isViewerFr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Relay | React数据驱动层初探">
+<meta property="og:url" content="https://leonlibraries.github.io/2016/04/06/RelayReact数据驱动层初探/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="Relay &amp;amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一个近乎完美的解决方案。
+什么是GraphQL呢？这是由facebook制定的定义在前端的数据查询语言规范（长的有点像JSON），来看一个官网例子123456789101112&amp;#123;  user(id: 3500401) &amp;#123;    id,    name,    isViewerFr">
+<meta property="og:image" content="https://leonlibraries.github.io/2016/04/06/RelayReact数据驱动层初探/roger-stack.png">
+<meta property="og:updated_time" content="2017-05-18T06:36:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Relay | React数据驱动层初探">
+<meta name="twitter:description" content="Relay &amp;amp; GraphQLRelay和GraphQL的组合给React项目的构建提出了一个近乎完美的解决方案。
+什么是GraphQL呢？这是由facebook制定的定义在前端的数据查询语言规范（长的有点像JSON），来看一个官网例子123456789101112&amp;#123;  user(id: 3500401) &amp;#123;    id,    name,    isViewerFr">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2016/04/06/RelayReact数据驱动层初探/roger-stack.png">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/前端那些事儿/">前端那些事儿</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-RelayReact数据驱动层初探" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        Relay | React数据驱动层初探
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2016/04/06/RelayReact数据驱动层初探/" class="article-date">
+            <time datetime="2016-04-06T03:01:31.000Z" itemprop="datePublished">2016-04-06</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/React/">React</a>, <a class="tag-link" href="/tags/Relay/">Relay</a>, <a class="tag-link" href="/tags/web前端/">web前端</a>, <a class="tag-link" href="/tags/前端组件化/">前端组件化</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p><img src="/2016/04/06/RelayReact数据驱动层初探/roger-stack.png" alt="The Relay" title="The Relay"></p>
+<h1 id="Relay-amp-GraphQL"><a href="#Relay-amp-GraphQL" class="headerlink" title="Relay &amp; GraphQL"></a>Relay &amp; GraphQL</h1><p>Relay和GraphQL的组合给React项目的构建提出了一个近乎完美的解决方案。</p>
+<h3 id="什么是GraphQL呢？"><a href="#什么是GraphQL呢？" class="headerlink" title="什么是GraphQL呢？"></a>什么是GraphQL呢？</h3><p>这是由facebook制定的定义在前端的数据查询语言规范（长的有点像JSON），来看一个官网例子<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  user(id: 3500401) &#123;</div><div class="line">    id,</div><div class="line">    name,</div><div class="line">    isViewerFriend,</div><div class="line">    profilePicture(size: 50)  &#123;</div><div class="line">      uri,</div><div class="line">      width,</div><div class="line">      height</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>从字面意义来理解，GraphQL （graph query language 图像查询语言），从大方面讲，这就是一个查询语言，类似于SQL；从作用范围来讲，定义在视图层，由前端发起查询请求，后台系统根据查询的条件参数以及查询结果中所需要的字段来返回对应的JSON数据。</p>
+<h3 id="GraphQL-所要解决的问题是什么？"><a href="#GraphQL-所要解决的问题是什么？" class="headerlink" title="GraphQL 所要解决的问题是什么？"></a>GraphQL 所要解决的问题是什么？</h3><p>GraphQL相对于传统Rest的另一种解决方案，那么传统RestAPI所遇到的痛点，也是GraphQL所关注的地方。</p>
+<h5 id="请求过多"><a href="#请求过多" class="headerlink" title="请求过多"></a>请求过多</h5><p>对于复杂的WEB项目构建来说（本身React也是致力于复杂WEB项目构建），请求过多无疑是Rest的痛点之一。试想一下，一个大型电商网站的主页所包含的信息涵盖了该电商网站的几乎所有的经营领域。除了商品分类需要展现以外，还需要展示促销信息、活动内容、秒杀、闪购及卖家广告等等。由于页面庞大，同步渲染固然是不可能的，只能异步将数据逐步展示出来，那么此间涉及到的Rest请求将会数不胜数。当然，即使不用GraphQL，对于请求过多的问题依然是有优化空间的，例如将请求分发到不同的域名下，引入图片、文件服务器等等，避免浏览器同一秒钟加载过多的同域请求限制。但优化归优化，这样的优化只是对现行设计的妥协。<br>那么GraphQL如何归并请求呢？<br>嵌套查询很好地归并了请求。<br>在通用的Rest接口设计中，如果要获得用户信息以及用户的关联信息，可能需要用多个请求来实现，例如<br><figure class="highlight awk"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">http:<span class="regexp">//</span>domain.com<span class="regexp">/user/</span>&#123;id&#125;</div><div class="line">http:<span class="regexp">//</span>domain.com<span class="regexp">/user/</span>&#123;id&#125;<span class="regexp">/profilePicture</span></div></pre></td></tr></table></figure></p>
+<p>而GraphQL只需要查询一次即可<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  user(id: 3500401) &#123;</div><div class="line">    id,</div><div class="line">    name,</div><div class="line">    isViewerFriend,</div><div class="line">    profilePicture(size: 50)  &#123;</div><div class="line">      uri,</div><div class="line">      width,</div><div class="line">      height</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h5 id="多端数据控制粒度问题"><a href="#多端数据控制粒度问题" class="headerlink" title="多端数据控制粒度问题"></a>多端数据控制粒度问题</h5><p>所谓多端可能包括PC端、移动APP（IOS/Android）、移动WEB等等。如若想做到代码最大程度的复用，多端务必共用一个接口，然而在传统Rest接口设计之下，多端共用接口会带来一定的问题。在一般情况下，移动端所能展示的信息会少于PC端，那么如果共用一个接口势必会造成移动端获取数据冗余，这或多或少的冗余也相应的带来不必要的性能损耗。于是乎，在不同UI和终端的设计需求之下，人们对数据有更小粒度的控制需求。相比于Rest，GraphQL更能满足之。</p>
+<h5 id="前后端分离-amp-版本控制"><a href="#前后端分离-amp-版本控制" class="headerlink" title="前后端分离 &amp; 版本控制"></a>前后端分离 &amp; 版本控制</h5><p>在以往的Rest接口中，终端，尤其是移动APP终端的版本控制是一个让人头大的问题。由于版本的迭代，接口的设计者就必须考虑到不同版本接口兼容问题，这或多或少都会给代码本身带来冗余量，显得十分不优雅。那么这个问题，GraphQL是怎么解决的呢？<br>GraphQL本质上提供的是一套数据查询语言在前端的实现方案，这套语言通过预先定义一个Schema来约定相关查询实体(GraphQLObjectType)、查询方式(Query)以及增删改服务（Mutation）等信息，前端根据GraphQL语法构造请求传递给服务端处理，服务端根据约定好的规则，将数据以JSON形式返回。<br>在这么一套流程中，前端拥有一套灵活的数据查询语言，因此前端在获取数据的话语权相比以往增加了不少。这间接意味着，前端可以脱离后端来工作，后端可以脱离前端业务需求进行开发。可以这么说，GraphQL也是一个前后端分离的比较极端的方案。<br>回到版本控制的层面来讨论，对于新版本终端新增字段的问题。传统的Rest接口通常情况下获取数据会导致冗余，因为Rest没办法更细致地控制数据粒度，终端便很自然地取出了一些完全用不到的数据，此间带来的不必要的传输和计算消耗，是无法避免的。GraphQL则能通过缩小控制粒度，轻松解决这样的痛点。</p>
+<h5 id="数据元信息"><a href="#数据元信息" class="headerlink" title="数据元信息"></a>数据元信息</h5><p>在以往的接口设计过程中，如若希望把接口的调用方式告知给调用者，通常采用的做法是文档化。撰写接口文档势需要时间，后期随着接口版本的更迭，还得不停对文档进行维护，蛋疼不已。GraphQL带给我们另一个好处是，数据元信息的实时获取，这点倒是和SQL相当类似。通过一定的查询规则，可以将schema信息一并实时查出，这里包括了字段名和字段类型以及字段描述等等信息。GraphQL解决了这样的痛点。</p>
+<h3 id="Relay-Data-fetching-for-React-applications"><a href="#Relay-Data-fetching-for-React-applications" class="headerlink" title="Relay | Data fetching for React applications"></a>Relay | Data fetching for React applications</h3><p>上边简单介绍了GraphQL方案带来的一系列的优势，那么如何把React Applications 和 GraphQL完美衔接起来呢？Relay应运而生。<br>我们来看看官网的介绍：</p>
+<blockquote>
+<p>Relay is a new framework from Facebook that provides data-fetching functionality for React applications. It was announced at React.js Conf (January 2015).<br>Each component specifies its own data dependencies declaratively using a query language called GraphQL. The data is made available to the component via properties on <em>this.props</em>.<br>Developers compose these React components naturally, and Relay takes care of composing the data queries into efficient batches, providing each component with exactly the data that it requested (and no more), updating those components when the data changes, and maintaining a client-side store (cache) of all data.</p>
+</blockquote>
+<p>开发者专注于React组件的拼装，而Relay关心的是如何有效的通过GraphQL组织和查询数据。Relay为给每一个组件提供精确的数据，而这些数据从服务器请求、服务器数据更新后的响应以及本地客户端维护的缓存中获取。<br>这段简介很好地说明了Relay在整个React生态中所扮演的角色。那接下来就是继续深入看看Relay到底是怎么运作的。</p>
+<h5 id="Relay-简单DEMO"><a href="#Relay-简单DEMO" class="headerlink" title="Relay 简单DEMO"></a>Relay 简单DEMO</h5><p>Relay的运作应该分两部分来描述，后端Schema层(准确来说Schema属于GraphQL中的定义)规定了实体数据结构（GraphQLObjectType）、模式规则（GraphQLSchema）、数据CRUD实现等内容；前端Code层则是定义路由规则（Relay.Route）、React组件（React.component）、Relay容器（Relay.Container）。<br>我们来看一个来自官网的简单例子。<br>由于代码高亮不能很好支持JSX，这里提供Github项目地址：<a href="https://github.com/leonlibraries/relay-treasurehunt" title="relay-treasurehunt" target="_blank" rel="external">https://github.com/leonlibraries/relay-treasurehunt</a><br>Schema的定义：<br><a href="https://github.com/leonlibraries/relay-treasurehunt/blob/master/data/schema.js" title="relay-treasurehunt" target="_blank" rel="external">https://github.com/leonlibraries/relay-treasurehunt/blob/master/data/schema.js</a></p>
+<h1 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h1><p>关于GraphQL、Relay和React整一套生态涉及到的细节非常多，这里只是初步了解，在以后的文章里会慢慢更新。</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2016/06/10/Java线程同步策略/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            Java线程同步策略
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2016/03/29/面向接口编程与策略模式/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">面向接口编程与策略模式</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2016/04/06/RelayReact数据驱动层初探/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

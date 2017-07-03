@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Java线程同步策略 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="Java,JVM,并发编程" />
+    
+    <meta name="description" content="线程安全概述引用《Java Concurrency In Practice》对线程安全的定义
+
+当多个线程访问一个对象时，如果不用考虑这些线程在运行时环境下的调度和交替执行，也不需要进行额外的同步，或者在调用方进行任何其他的协调操作，调用这个对象的行为都可以获得正确的结果，那这个对象是线程安全的。
+
+这意味着如若要实现线程安全，代码本身必须要封装所有必要的正确性保障手段（比如锁的实现），以确保程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java线程同步策略">
+<meta property="og:url" content="https://leonlibraries.github.io/2016/06/10/Java线程同步策略/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="线程安全概述引用《Java Concurrency In Practice》对线程安全的定义
+
+当多个线程访问一个对象时，如果不用考虑这些线程在运行时环境下的调度和交替执行，也不需要进行额外的同步，或者在调用方进行任何其他的协调操作，调用这个对象的行为都可以获得正确的结果，那这个对象是线程安全的。
+
+这意味着如若要实现线程安全，代码本身必须要封装所有必要的正确性保障手段（比如锁的实现），以确保程">
+<meta property="og:image" content="https://leonlibraries.github.io/2016/06/10/Java线程同步策略/multithread.png">
+<meta property="og:updated_time" content="2017-01-24T08:28:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java线程同步策略">
+<meta name="twitter:description" content="线程安全概述引用《Java Concurrency In Practice》对线程安全的定义
+
+当多个线程访问一个对象时，如果不用考虑这些线程在运行时环境下的调度和交替执行，也不需要进行额外的同步，或者在调用方进行任何其他的协调操作，调用这个对象的行为都可以获得正确的结果，那这个对象是线程安全的。
+
+这意味着如若要实现线程安全，代码本身必须要封装所有必要的正确性保障手段（比如锁的实现），以确保程">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2016/06/10/Java线程同步策略/multithread.png">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-Java线程同步策略" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        Java线程同步策略
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2016/06/10/Java线程同步策略/" class="article-date">
+            <time datetime="2016-06-10T12:48:25.000Z" itemprop="datePublished">2016-06-10</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/JVM/">JVM</a>, <a class="tag-link" href="/tags/Java/">Java</a>, <a class="tag-link" href="/tags/并发编程/">并发编程</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <p><img src="/2016/06/10/Java线程同步策略/multithread.png" alt="多线程并发安全" title="multithread"></p>
+<h1 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>引用《Java Concurrency In Practice》对线程安全的定义</p>
+<blockquote>
+<p>当多个线程访问一个对象时，如果不用考虑这些线程在运行时环境下的调度和交替执行，也不需要进行额外的同步，或者在调用方进行任何其他的协调操作，调用这个对象的行为都可以获得正确的结果，那这个对象是线程安全的。</p>
+</blockquote>
+<p>这意味着如若要实现线程安全，代码本身必须要封装所有必要的正确性保障手段（比如锁的实现），以确保程序无论在多线程环境下如何调用该方法，将始终保持返回正确的结果。</p>
+<h2 id="Java的线程安全"><a href="#Java的线程安全" class="headerlink" title="Java的线程安全"></a>Java的线程安全</h2><p>我们在讨论Java的线程安全，实际上讨论的是“相对线程安全”。需要保证的是单独对象操作是线程安全的，调用过程中不需要额外的保障措施，但是涉及到某些业务场景需要特定顺序连续调用，就可能需要调用者考虑使用额外的同步手段保证同步。引用《深入理解Java虚拟机》一书中的例子很能说明问题：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">static</span> Vector&lt;Integer&gt; vector = <span class="keyword">new</span> Vector&lt;Integer&gt;();</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</div><div class="line">    <span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i&lt;<span class="number">10</span>; i++)&#123;</div><div class="line">            vector.add(i);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">//一个线程删数据</span></div><div class="line">    Thread removeThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable()&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span> ; i&lt;vector.size() ;i++)&#123;</div><div class="line">                vector.remove(i);   </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    <span class="comment">//一个线程读数据</span></div><div class="line">    Thread printThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span> ; i&lt;vector.size() ;i++)&#123;</div><div class="line">                System.out.println(vector.get(i));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    removeThread.start();</div><div class="line">    printThread.start();</div><div class="line"></div><div class="line">    <span class="comment">//防止过多线程，内存溢出</span></div><div class="line">    <span class="keyword">while</span>(Thread.activeCount() &gt; <span class="number">20</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行报错：<br><code>java.lang.ArrayIndexOutOfBoundsException</code><br>虽然说Vector已经是Java中所谓的“线程安全”了，但是在这种特殊的情况下，无法保证正确的输出结果。这里就需要做一些额外的同步手段，如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//一个线程删数据</span></div><div class="line">Thread removeThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable()&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">synchronized</span> (vector)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span> ; i&lt;vector.size() ;i++)&#123;</div><div class="line">                vector.remove(i);   </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;);</div><div class="line"></div><div class="line"><span class="comment">//一个线程读数据</span></div><div class="line">Thread printThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">synchronized</span> (vector)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span> ; i&lt;vector.size() ;i++)&#123;</div><div class="line">                System.out.println(vector.get(i));  </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<h1 id="Java中的互斥同步"><a href="#Java中的互斥同步" class="headerlink" title="Java中的互斥同步"></a>Java中的互斥同步</h1><h2 id="Synchronized"><a href="#Synchronized" class="headerlink" title="Synchronized"></a>Synchronized</h2><p>说到线程安全，离不开讨论锁的实现方式。说到锁，Java开发者们第一想到的肯定是Synchronized关键字，我们就先从这个关键字切入，来阐述Java中锁的实现。</p>
+<h4 id="同步原理"><a href="#同步原理" class="headerlink" title="同步原理"></a>同步原理</h4><blockquote>
+<p>JVM规范规定JVM基于进入和退出Monitor对象来实现方法同步和代码块同步，但两者的实现细节不一样。代码块同步是使用monitorenter和monitorexit指令实现，而方法同步是使用另外一种方式实现的，细节在JVM规范里并没有详细说明，但是方法的同步同样可以使用这两个指令来实现。monitorenter指令是在编译后插入到同步代码块的开始位置，而monitorexit是插入到方法结束处和异常处， JVM要保证每个monitorenter必须有对应的monitorexit与之配对。任何对象都有一个 monitor 与之关联，当且一个monitor 被持有后，它将处于锁定状态。线程执行到 monitorenter 指令时，将会尝试获取对象所对应的 monitor 的所有权，即尝试获得对象的锁。</p>
+</blockquote>
+<p>Sychronized采取的同步策略是<strong>互斥同步</strong>，怎么理解互斥同步呢？通常情况下，临界区（Critical Section）、互斥量（Mutex）和信号量（Semaphore）都是主要的互斥实现形式。在每次获取资源之前，都需要检查是否有线程占用该资源。这里有两个关键点需要注意：</p>
+<ul>
+<li>Sychronized是可重入的；</li>
+<li>已经进入的线程尚未执行完，将会阻塞后面其他线程；</li>
+</ul>
+<h4 id="锁的本质是对象实例"><a href="#锁的本质是对象实例" class="headerlink" title="锁的本质是对象实例"></a>锁的本质是对象实例</h4><p>对于非静态方法来说，Synchronized 有两种呈现形式，Synchronized方法体和Synchronized语句块。两种呈现形式本质上的锁都是对象实例。<br>来看看代码实现<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SynchronizeDemo</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> SynchronizeDemo synchronizeDemo = <span class="keyword">new</span> SynchronizeDemo();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        Thread t1 = <span class="keyword">new</span> Thread(synchronizeDemo::doSth1);</div><div class="line">        Thread t2 = <span class="keyword">new</span> Thread(synchronizeDemo::doSth1);</div><div class="line">        t1.start();</div><div class="line">        t2.start();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doSth1</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">/**</span></div><div class="line">         * 锁对象实例 synchronizeDemo</div><div class="line">         */</div><div class="line">        <span class="keyword">synchronized</span> (synchronizeDemo)&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                System.out.println(<span class="string">"正在执行方法"</span>);</div><div class="line">                Thread.sleep(<span class="number">10000</span>);</div><div class="line">                System.out.println(<span class="string">"正在退出方法"</span>);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doSth2</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">/**</span></div><div class="line">         * 锁对象实例 this 等同于 synchronizeDemo</div><div class="line">         */</div><div class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>)&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                System.out.println(<span class="string">"正在执行方法"</span>);</div><div class="line">                Thread.sleep(<span class="number">10000</span>);</div><div class="line">                System.out.println(<span class="string">"正在退出方法"</span>);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">doSth3</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">/**</span></div><div class="line">         *  表面呈现是锁方法体，实际上是synchronized (this) ，等价于上面</div><div class="line">         */</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            System.out.println(<span class="string">"正在执行方法"</span>);</div><div class="line">            Thread.sleep(<span class="number">10000</span>);</div><div class="line">            System.out.println(<span class="string">"正在退出方法"</span>);</div><div class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>那么对于静态方法来说锁定的又是什么呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SynchronizeDemo</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        Thread t1 = <span class="keyword">new</span> Thread(SynchronizeDemo::doSth1);</div><div class="line">        Thread t2 = <span class="keyword">new</span> Thread(SynchronizeDemo::doSth1);</div><div class="line">        t1.start();</div><div class="line">        t2.start();</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 锁定Synchronized 的Class对象</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doSth1</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">synchronized</span> (SynchronizeDemo.class)&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                System.out.println(<span class="string">"正在执行方法"</span>);</div><div class="line">                Thread.sleep(<span class="number">10000</span>);</div><div class="line">                System.out.println(<span class="string">"正在退出方法"</span>);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 锁定当前类的Class对象，所以和上边等价</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doSth2</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            System.out.println(<span class="string">"正在执行方法"</span>);</div><div class="line">            Thread.sleep(<span class="number">10000</span>);</div><div class="line">            System.out.println(<span class="string">"正在退出方法"</span>);</div><div class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>我们可以看出，从本质上而非呈现形式上看，synchronized同步也分两种。</p>
+<ul>
+<li>锁类的对象实例，针对于某个具体实例普通方法/语句块的互斥；</li>
+<li>锁类的Class对象，针对于Class类静态方法/语句块的互斥；</li>
+</ul>
+<h4 id="进程切换导致的系统开销"><a href="#进程切换导致的系统开销" class="headerlink" title="进程切换导致的系统开销"></a>进程切换导致的系统开销</h4><p>Java的线程是直接映射到操作系统线程之上的，线程的挂起、阻塞、唤醒等都需要操作系统的参与，因此在线程切换的过程中是有一定的系统开销的。在多线程环境下调用Synchronized方法，有可能需要多次线程状态切换，因此可以说Synchronized是在Java语言中一个<strong>重量级</strong>操作。<br>虽然如此，JDK1.6版本后还是对Synchronized关键字做了相关优化，加入<strong>锁自旋</strong>特性减少系统线程切换导致的开销，几乎与ReentrantLock的性能不相上下，因此建议在能满足业务需求的前提下，优先使用Sychronized。</p>
+<h2 id="ReentrantLock-可重入锁"><a href="#ReentrantLock-可重入锁" class="headerlink" title="ReentrantLock (可重入锁)"></a>ReentrantLock (可重入锁)</h2><p>与Synchronized的实现原理类似，采用的都是<strong>互斥同步</strong>策略，用法和实现效果上来说也很相似，也具备可重入的特性。<br>不同点是，Sychronized是原生语法层面上同步控制，其颗粒度更大；相比而言，ReentranLock是从API层面来控制锁（<code>lock()</code>与<code>unlock()</code>方法），开发者的自主权更强，可控制粒度更细，优化空间更高。</p>
+<h4 id="高级特性"><a href="#高级特性" class="headerlink" title="高级特性"></a>高级特性</h4><p>这里可以直接引用《深入理解Java虚拟机》的描述</p>
+<blockquote>
+<ul>
+<li><strong>等待可中断</strong>是指当持有锁的线程长期不释放锁的时候，正在等待的线程可以选择放弃等待，改为处理其他事情，可中断特性对处理执行时间非常长的同步块很有帮助。</li>
+<li><strong>公平锁</strong>是指多个线程在等待同一个锁时，必须按照申请锁的时间顺序依次获得锁；而非公平锁则不保证这一点，在锁被释放时，任何一个等待锁的线程都有机会获得锁。Sychronized的锁是非公平的，<code>ReentrantLock</code>默认情况下也是非公平的，但可以通过带boolean值的构造函数要求使用公平锁；</li>
+<li><strong>锁绑定多个条件</strong>是指一个ReentrantLock对象可以同时绑定多个Condition对象，而在Synchronized中，锁对象的<code>wait()</code>和<code>notify()</code>或<code>notifyAll()</code>方法可以实现一个隐含的条件，如果要多于一个条件关联的时候，就不得不额外添加一个锁，而<code>ReentrantLock</code>无需这样做，只需要多次调用<code>newCondition()</code>方法即可。</li>
+</ul>
+</blockquote>
+<h4 id="公平锁正确的打开方式"><a href="#公平锁正确的打开方式" class="headerlink" title="公平锁正确的打开方式"></a>公平锁正确的打开方式</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.lock;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.junit.Test;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.ArrayList;</div><div class="line"><span class="keyword">import</span> java.util.Collection;</div><div class="line"><span class="keyword">import</span> java.util.Collections;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.locks.Lock;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.locks.ReentrantLock;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 公平锁和非公平锁区别</div><div class="line"> *</div><div class="line"> * Created by LeonWong on 16/4/28.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FairAndUnfairTest</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Lock fairLock = <span class="keyword">new</span> ReentrantLockRev(<span class="keyword">true</span>);</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Lock unfairLock = <span class="keyword">new</span> ReentrantLockRev(<span class="keyword">false</span>);</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">fair</span><span class="params">()</span> </span>&#123;</div><div class="line">        testLock(fairLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">unfair</span><span class="params">()</span> </span>&#123;</div><div class="line">        testLock(unfairLock);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 启动十个Job</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> lock</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">testLock</span><span class="params">(Lock lock)</span> </span>&#123;</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</div><div class="line">            <span class="keyword">new</span> Thread(<span class="keyword">new</span> Job(lock), <span class="string">"Thread-"</span> + i).start();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Job</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">        <span class="keyword">private</span> Lock lock;</div><div class="line"></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Job</span><span class="params">(Lock lock)</span> </span>&#123;</div><div class="line">            <span class="keyword">this</span>.lock = lock;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            lock.lock();</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                <span class="comment">// 连续多次打印当前Tread和队列中的Thread</span></div><div class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">6</span>; i++) &#123;</div><div class="line">                    System.out.println(<span class="string">"Lock by ['"</span> + Thread.currentThread().getName() + <span class="string">"']"</span>);</div><div class="line">                &#125;</div><div class="line">            &#125; <span class="keyword">finally</span> &#123;</div><div class="line">                lock.unlock();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">ReentrantLockRev</span> <span class="keyword">extends</span> <span class="title">ReentrantLock</span> </span>&#123;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="title">ReentrantLockRev</span><span class="params">(<span class="keyword">boolean</span> fair)</span> </span>&#123;</div><div class="line">            <span class="keyword">super</span>(fair);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="comment">// 颠倒列表顺序</span></div><div class="line">        <span class="function"><span class="keyword">public</span> Collection&lt;Thread&gt; <span class="title">getQueuedThreads</span><span class="params">()</span> </span>&#123;</div><div class="line">            List&lt;Thread&gt; threads = <span class="keyword">new</span> ArrayList&lt;Thread&gt;(<span class="keyword">super</span>.getQueuedThreads());</div><div class="line">            Collections.reverse(threads);</div><div class="line">            <span class="keyword">return</span> threads;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以发现，使用非公平锁的时候，打印出来的线程名称顺序是乱的；而使用公平锁后，线程名称显示顺序则是按照先进先出的原则打印出来。</p>
+<h4 id="绑定条件-–-Condition用法"><a href="#绑定条件-–-Condition用法" class="headerlink" title="绑定条件 – Condition用法"></a>绑定条件 – Condition用法</h4><p>在jdk1.5以前，线程的等待与唤醒功能，只能通过执行Object自带的<code>notify()</code>和<code>wait()</code>方法实现。来看个简单的栗子<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.volatileUsage;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.junit.Test;</div><div class="line"><span class="keyword">import</span> org.leon.concurent.SleepUtils;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.text.SimpleDateFormat;</div><div class="line"><span class="keyword">import</span> java.util.Date;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaitAndNotifyDemo</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="comment">// 内存可见</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span> flag = <span class="keyword">true</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Object lock = <span class="keyword">new</span> Object();</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doLauncher</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">        Thread waitThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Wait(), <span class="string">"WaitThread"</span>);</div><div class="line">        waitThread.start();</div><div class="line">        SleepUtils.sleepForSecond(<span class="number">1</span>);</div><div class="line">        Thread notifyThread = <span class="keyword">new</span> Thread(<span class="keyword">new</span> Notify(), <span class="string">"NotifyThread"</span>);</div><div class="line">        notifyThread.start();</div><div class="line">        <span class="comment">// 防止主线程关闭后导致子线程关闭</span></div><div class="line">        SleepUtils.sleepForSecond(<span class="number">1000000</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Wait</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="comment">// 加锁,拥有lock的Monitor</span></div><div class="line">            <span class="keyword">synchronized</span> (lock) &#123;</div><div class="line">                <span class="comment">// 当条件不满足时,继续wait,同时释放了lock的锁</span></div><div class="line">                <span class="keyword">while</span> (flag) &#123;</div><div class="line">                    <span class="keyword">try</span> &#123;</div><div class="line">                        System.out.println(Thread.currentThread() + <span class="string">" flag is true. wait @ "</span></div><div class="line">                                + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">                        lock.wait();</div><div class="line">                    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                        e.printStackTrace();</div><div class="line">                    &#125;</div><div class="line">                    System.out.println(Thread.currentThread() + <span class="string">" Thread has been woke!!!!. wait @ "</span></div><div class="line">                            + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">                &#125;</div><div class="line">                <span class="comment">// 条件满足,完成工作</span></div><div class="line">                System.out.println(Thread.currentThread() + <span class="string">" flag is false. done!!! @ "</span></div><div class="line">                        + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Notify</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="comment">// 加锁,拥有lock的Monitor</span></div><div class="line">            <span class="keyword">synchronized</span> (lock) &#123;</div><div class="line">                <span class="comment">// 获取lock的锁,然后进行通知,通知时不会释放lock的锁</span></div><div class="line">                <span class="comment">// 直到当前线程释放了lock后,waitThread才能从wait方法中返回</span></div><div class="line">                System.out.println(Thread.currentThread() + <span class="string">" hold lock. notify @ "</span></div><div class="line">                        + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">                System.out.println(Thread.currentThread() + <span class="string">" do notifyAll,but I wanna sleep 4 5 secs. notify @ "</span></div><div class="line">                        + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">                lock.notifyAll();</div><div class="line">                flag = <span class="keyword">false</span>;</div><div class="line">                SleepUtils.sleepForSecond(<span class="number">5</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="comment">// 再次加锁</span></div><div class="line">            <span class="keyword">synchronized</span> (lock) &#123;</div><div class="line">                System.out.println(Thread.currentThread() + <span class="string">" hold lock another 5 secs and. notify @ "</span></div><div class="line">                        + <span class="keyword">new</span> SimpleDateFormat(<span class="string">"HH:mm:ss"</span>).format(<span class="keyword">new</span> Date()));</div><div class="line">                SleepUtils.sleepForSecond(<span class="number">5</span>);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这里要注意的是，执行<code>wait()</code>方法后，线程进入等待状态，并且释放了锁，等待其他线程执行<code>notify()</code>方法将其唤醒。<br>而Condition的用法与其极其类似，先是从<code>Lock</code>对象中执行<code>newCondition()</code>实例化Condition对象，且允许实例化多个。通过调用<code>await()</code>和<code>notify()</code>方法完成等待唤醒一系列操作，来看个有界阻塞队列的实现。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.condition;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.concurrent.locks.Condition;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.locks.Lock;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.locks.ReentrantLock;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 有界阻塞队列&lt;br/&gt;</div><div class="line"> * 当队列为空,队列将会阻塞删除并获取操作的线程,直到队列中有新元素;&lt;br/&gt;</div><div class="line"> * 当队列已满,队列将会阻塞添加操作的线程，直到队列有空位置；</div><div class="line"> * &lt;p&gt;</div><div class="line"> * Created by LeonWong on 16/4/29.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BoundedQueue</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="keyword">private</span> Object[] items;</div><div class="line"></div><div class="line">    <span class="comment">// 添加的下标,删除的下标和数组当前数量</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> addIndex, removeIndex, count;</div><div class="line">    <span class="keyword">private</span> Lock lock = <span class="keyword">new</span> ReentrantLock();</div><div class="line">    <span class="keyword">private</span> Condition notEmpty = lock.newCondition();</div><div class="line">    <span class="keyword">private</span> Condition notFull = lock.newCondition();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">BoundedQueue</span><span class="params">()</span> </span>&#123;</div><div class="line">        items = <span class="keyword">new</span> Object[<span class="number">5</span>];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">BoundedQueue</span><span class="params">(<span class="keyword">int</span> size)</span> </span>&#123;</div><div class="line">        items = <span class="keyword">new</span> Object[size];</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 添加一个元素,数组满则添加线程进入等待状态</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> t</div><div class="line">     * <span class="doctag">@throws</span> InterruptedException</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(T t)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        lock.lock();</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="keyword">while</span> (items.length == count) &#123;</div><div class="line">                System.out.println(<span class="string">"添加队列--陷入等待"</span>);</div><div class="line">                notFull.await();</div><div class="line">            &#125;</div><div class="line">            items[addIndex] = t;</div><div class="line">            addIndex = ++addIndex == items.length ? <span class="number">0</span> : addIndex;</div><div class="line">            count++;</div><div class="line">            notEmpty.signal();</div><div class="line">        &#125; <span class="keyword">finally</span> &#123;</div><div class="line">            lock.unlock();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 删除并获取一个元素,数组空则进入等待</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     * <span class="doctag">@throws</span> InterruptedException</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">remove</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        lock.lock();</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="keyword">while</span> (count == <span class="number">0</span>) &#123;</div><div class="line">                System.out.println(<span class="string">"删除队列--陷入等待"</span>);</div><div class="line">                notEmpty.await();</div><div class="line">            &#125;</div><div class="line">            Object tmp = items[removeIndex];</div><div class="line">            items[removeIndex] = <span class="keyword">null</span>;<span class="comment">// 这一步可以有可无</span></div><div class="line">            removeIndex = ++removeIndex == items.length ? <span class="number">0</span> : removeIndex;</div><div class="line">            count--;</div><div class="line">            notFull.signal();</div><div class="line">            <span class="keyword">return</span> (T) tmp;</div><div class="line">        &#125; <span class="keyword">finally</span> &#123;</div><div class="line">            lock.unlock();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">public</span> Object[] getItems() &#123;</div><div class="line">        <span class="keyword">return</span> items;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setItems</span><span class="params">(Object[] items)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.items = items;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getAddIndex</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> addIndex;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setAddIndex</span><span class="params">(<span class="keyword">int</span> addIndex)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.addIndex = addIndex;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getRemoveIndex</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> removeIndex;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setRemoveIndex</span><span class="params">(<span class="keyword">int</span> removeIndex)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.removeIndex = removeIndex;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> count;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setCount</span><span class="params">(<span class="keyword">int</span> count)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.count = count;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>测试用例<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.condition;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.junit.Test;</div><div class="line"><span class="keyword">import</span> org.leon.concurent.SleepUtils;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BoundedQueueTest</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 队列初始化size为10</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> BoundedQueue&lt;String&gt; boundedQueue = <span class="keyword">new</span> BoundedQueue&lt;&gt;(<span class="number">10</span>);</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testBoundedQueue</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="comment">// 删除队列,起初队列为空,务必陷入等待</span></div><div class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> DoRemove()).start();</div><div class="line"></div><div class="line">        SleepUtils.sleepForSecond(<span class="number">2</span>);</div><div class="line"></div><div class="line">        <span class="comment">// 添加11条数据入队,队列“有可能”会满,并陷入等待</span></div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">11</span>; i++) &#123;</div><div class="line">            <span class="keyword">new</span> Thread(<span class="keyword">new</span> DoAdd()).start();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        System.out.println(<span class="string">"添加队列完毕"</span>);</div><div class="line">        SleepUtils.sleepForSecond(<span class="number">4</span>);</div><div class="line"></div><div class="line">        <span class="comment">// 再删一次</span></div><div class="line">        boundedQueue.remove();</div><div class="line"></div><div class="line">        SleepUtils.sleepForSecond(<span class="number">2</span>);</div><div class="line"></div><div class="line">        System.out.println(<span class="string">"操作完毕,其中addIndex为"</span> + boundedQueue.getAddIndex() + <span class="string">",removeIndex为"</span></div><div class="line">                + boundedQueue.getRemoveIndex() + <span class="string">",count为"</span> + boundedQueue.getCount());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">DoRemove</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                boundedQueue.remove();</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">DoAdd</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">                boundedQueue.add(<span class="string">"Something"</span>);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h4 id="AbstractQueuedSynchronizer（简称AQS）"><a href="#AbstractQueuedSynchronizer（简称AQS）" class="headerlink" title="AbstractQueuedSynchronizer（简称AQS）"></a>AbstractQueuedSynchronizer（简称AQS）</h4><p>ReentrantLock实现是基于AQS这个抽象方法的，然而篇幅有限，将在下一篇文章里从代码的角度着重探讨。<br>简单来说，AQS是通过管理状态的方式来实现相对线程安全的。Java中信号量（Semaphore）、读写锁（ReadWriteLock）、计数器（CountDownLatch）以及FutureTask等都是基于AQS实现的，可见这个抽象类的地位多么不一般。</p>
+<h4 id="与其说ReentrantLock性能更好不如说Synchronized优化空间更大"><a href="#与其说ReentrantLock性能更好不如说Synchronized优化空间更大" class="headerlink" title="与其说ReentrantLock性能更好不如说Synchronized优化空间更大"></a>与其说ReentrantLock性能更好不如说Synchronized优化空间更大</h4><p>上面介绍过，Synchronized在JDK1.6以后性能有所增强，因此在能满足业务复杂度需求的情况下，采用Synchronized也未尝不可。然而<strong>互斥同步</strong>终究属于悲观的并发策略，在对性能要求极高的业务场景下使用以上<strong>互斥同步</strong>策略并不合适。接下来进而介绍如何实现乐观的同步策略。</p>
+<h2 id="Java中的非阻塞同步策略"><a href="#Java中的非阻塞同步策略" class="headerlink" title="Java中的非阻塞同步策略"></a>Java中的非阻塞同步策略</h2><h4 id="CAS指令与原子性"><a href="#CAS指令与原子性" class="headerlink" title="CAS指令与原子性"></a>CAS指令与原子性</h4><p>原子操作的业务表现形式是“不可被中断或不可被分割操作”。所谓CAS（Compare And Swap）比较并交换就是一种原子操作。简单来说执行CAS需要两个参数，一个新值，一个旧值，当比较内存的值与旧值相符时，则替换为新值，否则不执行替换操作。CPU如何实现，这里不多说，Java若要实现CAS则需要CPU指令集配合，JDK1.5加入了这个特性，并在随后的版本对其进行丰富。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.atomic;</div><div class="line"></div><div class="line"><span class="keyword">import</span> org.junit.Test;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicInteger;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by LeonWong on 16/6/10.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AtomicItegerUpdaterTest</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> AtomicInteger couter = <span class="keyword">new</span> AtomicInteger(<span class="number">0</span>);</div><div class="line"></div><div class="line">    <span class="meta">@Test</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doUpdate</span><span class="params">()</span> </span>&#123;</div><div class="line">        couter.compareAndSet(<span class="number">0</span>, <span class="number">1</span>);</div><div class="line">        System.out.println(<span class="string">"结果为"</span> + couter.get());<span class="comment">// 结果为1</span></div><div class="line">        couter.compareAndSet(<span class="number">0</span>, <span class="number">3</span>);</div><div class="line">        System.out.println(<span class="string">"结果为"</span> + couter.get());<span class="comment">// 结果为1</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>除了Integer以外，还支持包括CAS更新实例、更新实例的属性等功能。<br>阅读源码不难发现，Java是通过一个<code>sun.misc.Unsafe</code>的类，完成CAS指令操作的，然而我们从AQS的源码中也发现了<code>sun.misc.Unsafe</code>类的踪影。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * Atomically sets synchronization state to the given updated</div><div class="line"> * value if the current state value equals the expected value.</div><div class="line"> * This operation has memory semantics of a &#123;<span class="doctag">@code</span> volatile&#125; read</div><div class="line"> * and write.</div><div class="line"> *</div><div class="line"> * <span class="doctag">@param</span> expect the expected value</div><div class="line"> * <span class="doctag">@param</span> update the new value</div><div class="line"> * <span class="doctag">@return</span> &#123;<span class="doctag">@code</span> true&#125; if successful. False return indicates that the actual</div><div class="line"> *         value was not equal to the expected value.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">compareAndSetState</span><span class="params">(<span class="keyword">int</span> expect, <span class="keyword">int</span> update)</span> </span>&#123;</div><div class="line">    <span class="comment">// See below for intrinsics setup to support this</span></div><div class="line">    <span class="keyword">return</span> unsafe.compareAndSwapInt(<span class="keyword">this</span>, stateOffset, expect, update);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>其实不难理解，AQS负责管理状态（也可以理解为互斥资源）—— 这里狭义来说可以是锁是否被线程占用的标记，当然，状态的判定规则以及互斥资源数目由AQS的继承者们负责实现，而状态的更新只能是通过CAS指令完成，以确保线程安全。</p>
+<h2 id="volatile-关键字"><a href="#volatile-关键字" class="headerlink" title="volatile 关键字"></a>volatile 关键字</h2><p><code>volatile</code>在多线程环境下保证了共享变量内存可见性。意思就是线程A修改了<code>volatile</code>修饰的共享变量，线程B能够感知修改。如果<code>volatile</code>合理使用的话，将会比Synchronized的执行成本更低。<br>从底层的角度来说，为了提高处理速度，CPU不直接和内存进行通信，而是先将数据读入到CPU缓存后在进行操作，但不知何时将会更新到内存。声明变量加入<code>volatile</code>关键字后，每次修改该变量，JVM就会通知处理器将CPU缓存内的值强制更新到内存中，这就是所谓的“可见性”。再来看代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> org.leon.concurent.volatileUsage;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * VolatileDemo 与 SynchronizedDemo 实现效果等价</div><div class="line"> *</div><div class="line"> * Created by LeonWong on 16/6/10.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">VolatileDemo</span> </span>&#123;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">long</span> vl = <span class="number">0L</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">long</span> l)</span> </span>&#123;</div><div class="line">        vl = l;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getAndIncrement</span><span class="params">()</span> </span>&#123;</div><div class="line">        vl++;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> vl;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SynchronizedDemo</span> </span>&#123;</div><div class="line">    <span class="keyword">long</span> vl = <span class="number">0L</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">long</span> l)</span> </span>&#123;</div><div class="line">        vl = l;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getAndIncrement</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">long</span> temp = get();</div><div class="line">        temp += <span class="number">1L</span>;</div><div class="line">        set(temp);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">long</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> vl;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>VolatileDemo</code> 与 <code>SynchronizedDemo</code>实现效果等价，但是性能来说前者更优，原因前面也说了，<code>Synchronized</code>在多线程环境下会引起上下文切换及调度，在并发量大的前提下，有不小的性能开销。因此合理使用<code>volatile</code>有助于我们代码性能的优化。</p>
+<h2 id="无同步策略"><a href="#无同步策略" class="headerlink" title="无同步策略"></a>无同步策略</h2><p>这就比较容易理解了，同步只是线程安全的一个手段，无同步并不意味着线程不安全。大致两种方法的代码可以保证没有使用同步方案的前提下的线程安全。</p>
+<ul>
+<li><strong>可重入代码。</strong>例如纯计算的函数之类的，方法运行间不需要获取外部资源就可以进行计算。</li>
+<li><strong>线程本地存储资源</strong>。很好理解，线程本地维护自己的资源，根本不存在与其他线程资源冲突的可能。</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本篇简单介绍了Java并发环境下有关线程安全的语法糖，也做了一些粗略的利弊分析，想必在未来开发的过程中，我们会对线程安全的实现方式有一个基本的考量。如果可以，尽可能用计算机的底层去思考我们编码会造成怎样的影响，我们的代码是否适用于业务本身，诸如此类。关于并发编程，未来还会继续更新。</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2016/06/13/摸清Java并发安全的套路/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            摸清Java并发安全的套路
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2016/04/06/RelayReact数据驱动层初探/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">Relay | React数据驱动层初探</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2016/06/10/Java线程同步策略/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

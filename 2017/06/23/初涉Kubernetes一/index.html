@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>初涉 Kubernetes(一)：组件认知 | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="Docker,应用编排,Kubernetes,调度算法" />
+    
+    <meta name="description" content="Overview
+上一篇《Kubeadm 搭建 Kubernetes 集群》 简单交代了 Kubernetes 的集群搭建方法，这一篇算是基于安装好的集群，做了一个简单的入门总结。
+API ServerAPI Server 是 Kubernetes 非常核心的一个组件，主要的作用就是提供了 Kubernetes 各类资源对象（Service、Pod、RC、Deployment 等） 的增删改查以及">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初涉 Kubernetes(一)：组件认知">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/06/23/初涉Kubernetes一/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="Overview
+上一篇《Kubeadm 搭建 Kubernetes 集群》 简单交代了 Kubernetes 的集群搭建方法，这一篇算是基于安装好的集群，做了一个简单的入门总结。
+API ServerAPI Server 是 Kubernetes 非常核心的一个组件，主要的作用就是提供了 Kubernetes 各类资源对象（Service、Pod、RC、Deployment 等） 的增删改查以及">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/06/23/初涉Kubernetes一/kube-architecture.png">
+<meta property="og:updated_time" content="2017-06-28T02:52:11.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="初涉 Kubernetes(一)：组件认知">
+<meta name="twitter:description" content="Overview
+上一篇《Kubeadm 搭建 Kubernetes 集群》 简单交代了 Kubernetes 的集群搭建方法，这一篇算是基于安装好的集群，做了一个简单的入门总结。
+API ServerAPI Server 是 Kubernetes 非常核心的一个组件，主要的作用就是提供了 Kubernetes 各类资源对象（Service、Pod、RC、Deployment 等） 的增删改查以及">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/06/23/初涉Kubernetes一/kube-architecture.png">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/云平台/">云平台</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-初涉Kubernetes一" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        初涉 Kubernetes(一)：组件认知
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2017/06/23/初涉Kubernetes一/" class="article-date">
+            <time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Docker/">Docker</a>, <a class="tag-link" href="/tags/Kubernetes/">Kubernetes</a>, <a class="tag-link" href="/tags/应用编排/">应用编排</a>, <a class="tag-link" href="/tags/调度算法/">调度算法</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h2 id="Overview"><a href="#Overview" class="headerlink" title="Overview"></a>Overview</h2><p><img src="/2017/06/23/初涉Kubernetes一/kube-architecture.png" alt="官方给出的架构图"></p>
+<p>上一篇<a href="https://leonlibraries.github.io/2017/06/15/Kubeadm搭建Kubernetes集群/">《Kubeadm 搭建 Kubernetes 集群》</a> 简单交代了 Kubernetes 的集群搭建方法，这一篇算是基于安装好的集群，做了一个简单的入门总结。</p>
+<h2 id="API-Server"><a href="#API-Server" class="headerlink" title="API Server"></a>API Server</h2><p>API Server 是 Kubernetes 非常核心的一个组件，主要的作用就是提供了 Kubernetes 各类资源对象（Service、Pod、RC、Deployment 等） 的增删改查以及 Watch 等 HTTP Rest 接口，成为集群内各个功能模块之间数据交互和通信的中心枢纽。是整个系统的数据总线和数据中心。它同样是集群管理的入口、资源配额控制的入口。既然这么重要，安全性肯定要保障，因此它也提供了较为完备的安全机制。</p>
+<p>如何对他进行直接的访问呢？</p>
+<ul>
+<li><code>kubectl</code>：一个客户端工具，可以搭建在集群之外，安装和配置的过程可以参考上一篇文章；</li>
+<li><code>kubectl proxy</code>：一个代理出口，也可以搭建在集群之外，有自己的权限控制体系（RBAC），可以在里边部署可视化界面直接看到集群内部重要的元数据。</li>
+</ul>
+<p><img src="/2017/06/23/初涉Kubernetes一/Kubernetes.001.png" alt="Kubernetes 组件架构图"></p>
+<p>整个 Kubernetes 组件大致就是这样的，可以见得 API Server 起着枢纽的作用，元数据都会通过 API Server 存到 Etcd 集群之中。无论是 Controller Manager 还是 Scheduler，抑或是 Kubelet 都要直接与 API Server 进行数据对接。</p>
+<p>其中 Kubelet 的作用是将自身资源情况上报给 API Server 以及 Watch Pod 的创建以及删除，如果这个 Pod 与自己的 Node 有关，那么就要进行下一步的拉取镜像、创建容器或删除容器操作，这个后续将会提及到。</p>
+<h2 id="Controller-Manager"><a href="#Controller-Manager" class="headerlink" title="Controller Manager"></a>Controller Manager</h2><p>Controller Manager 是一个集群内部的管理控制中心，有一组控制器构成，这组控制器负责集群内部的 Node、Pod、Endpoint、Namespace、ServiceAccount、ResourceQuota 等等资源的管理。与之对应就有如下的控制器：</p>
+<p><img src="/2017/06/23/初涉Kubernetes一/Kubernetes.002.png" alt="Kubernetes Controller Manager"></p>
+<p>其中重点介绍几个比较重要的控制器：</p>
+<ul>
+<li><p><code>Replication Controller</code>：顾名思义，副本控制器，其作用是针对 RC 来说的（这里的 RC 可以是 ReplicationController、Deployment 以及 ReplicaSet，此处的 ReplicationController 为资源对象，并非指控制器），目的是保证 RC 指定的副本数量预期值与现实保持一致，意味着当副本数与预期不一致的时候，会发起重新调度的功能。并且滚动升级、弹性扩缩等功能都是交由它来实现。</p>
+<blockquote>
+<p><strong>tips</strong>：这里的滚动升级是在版本更新的过程中保持旧版本 Pod 不会立马被删除，只有当新版本完全部署完毕后旧版本的 Pod 才会慢慢被删掉；弹性扩缩是根据其本身的资源监控（Heapster），默认是以 CPU 的使用率，超过指定的阀值后实现动态增加节点，反之低于阀值将会释放资源，缩减节点。</p>
+</blockquote>
+</li>
+<li><p><code>Node Controller</code>：Kubelet 启动时，通过 API Server 注册自身的节点信息，并定时向 API Server 汇报，API Server 接收这些信息，将其更新到 etcd 之中。而 Node Controller 就是通过 API Server 获取到这些信息。<br><img src="/2017/06/23/初涉Kubernetes一/nodestatus.jpeg" alt="Node 信息"><br>当 Controller Manager 启动时指定了 <code>--cluster-cidr</code> 这个参数，那么每个节点都会自动分配一个与其他节点不一样的 Pod CIDR，也就意味着规定了该节点的网段，且不会与其他节点产生冲突。值得一提的是，当一个节点在很长一段时间内没有上报状态信息，Node Controller会认为这个节点已经死了，并删除节点将其踢出。</p>
+</li>
+<li><p><code>ResourceQuota Controller</code>：资源配额控制器会将容器、Pod以及 Namespace 三个维度统计资源占用情况，并将统计结果汇总到 etcd 数据库中，每次向 API Server 创建资源的时候，会经过 Admission Control ，这里 Admission Control 有两种策略，LimitRanger 和 ResourceQuota，分别对应 Pod 与容器的资源 和 Namespaces 的资源限制。确保调度不会超过集群的资源规划以及物理资源限制。如果超出资源限制，就会报错。</p>
+</li>
+<li><p><code>Service Controller</code> 和 <code>Endpoint Controller</code>：Service Controller 负责将 Pod 集合暴露成一个 Service ，并通过 Endpoint Controller 分配其一个虚拟的 Cluster IP（Endpoint 对象的一个属性）。Endpoint Controller 负责维护所有的 Endpoint 对象，其监听 Service 的创建和删除事件，并对应分配和删除与之对应的 Endpoint 对象。</p>
+</li>
+</ul>
+<blockquote>
+<p>值得一提的是， Cluster IP 指向的是一个微服务，其中可能包含了多个节点，节点访问的负载均衡是通过 kube-proxy 进程来实现的。后续会有详细的介绍。</p>
+</blockquote>
+<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p><img src="/2017/06/23/初涉Kubernetes一/Kubernetes.003.png" alt="调度器示意"></p>
+<p>Scheduler 也免不了要和 API Server 打交道，整个调度流程大致分为两个步骤：</p>
+<ul>
+<li>预选调度过程，遍历所有 Node，筛选出符合要求的候选节点，这里给用户提供了许多预选策略；</li>
+<li>优选节点，采用优先算法计算出每个候选节点的几分，积分高出者胜出。</li>
+</ul>
+<p>这两种策略是每次调度都要执行的，具体的策略不做过多描述，可以参考这篇文档：<br><a href="https://github.com/kubernetes/community/blob/master/contributors/devel/scheduler_algorithm.md" target="_blank" rel="external">https://github.com/kubernetes/community/blob/master/contributors/devel/scheduler_algorithm.md</a></p>
+<h2 id="Kubelet"><a href="#Kubelet" class="headerlink" title="Kubelet"></a>Kubelet</h2><p>集群中的每个 Node 都有 Kubelet 进程，该进程用于处理 Master 节点下发到本节点的任务，管理 Pod 以及 Pod 中的容器。</p>
+<ul>
+<li>节点管理：kubelet 启动时向 API Server 注册节点信息，并定时向 API Server 汇报节点状况；</li>
+<li>Pod管理：创建/删除 Pod，下载容器镜像，用 Pause 创建容器，运行容器，校验容器是否正确等；</li>
+<li>容器健康检查：通过<code>cat /tmp/health</code> 以及访问容器的 HTTP 接口（HTTP 状态码作为判断依据）来判断容器是否健康；</li>
+<li>cAdvisor 资源监控：cAdvisor 集成到 kubelet 程序的代码之中，负责查找当前节点的容器，自动采集容器级别的 CPU、内存、文件系统和网络使用的统计信息。 Heapster 通过 kubelet 的 cAdvisor 拿到这些参数，推到后端的 InfluxDB（with Grafana）之中。</li>
+</ul>
+<blockquote>
+<p>cAdvisor 也是一个不错的容器级监控工具，用于排障有一定的意义</p>
+</blockquote>
+<h2 id="kube-proxy：从-Service-说开去"><a href="#kube-proxy：从-Service-说开去" class="headerlink" title="kube-proxy：从 Service 说开去"></a>kube-proxy：从 Service 说开去</h2><p>上边有简单交代过 kube-proxy 的作用，这里展开说。</p>
+<p>Pod 是用来挂载一个或一组容器的，应用的滚动升级以及弹性扩缩都是基于 Pod 作为最小单元来实现的，Pod 有自己的 IP 和端口，理论上来说，已经可以正常访问到容器内部程序了，但依旧存在不小的问题。</p>
+<p>简单来说，Pods 确乎有自己的 IP 资源，然而是瞬时的，其资源以及 IP 都是不稳定的，也是容易产生变化的。以 Pod IP 做服务的基础 IP 的话显然会出现问题，毕竟服务调用方无法准确而及时的知道 Pod 是否发生了变化（这个变化包括滚动升级、弹性扩缩以及重新调度）。</p>
+<p>为了解决上面说的问题，Kubernetes 抽象出了 Service 概念，而 Service 本身也就是对一组服务的抽象。<br><img src="/2017/06/23/初涉Kubernetes一/kube-proxy.png" alt="Service 详情"><br>Kubernetes 创建服务的时候，通常会给这个服务一个 Cluster IP，这个 IP 对后端一组服务的 Pod IP 实现了映射并且负载均衡。嗯，理解的没错，这个 Cluster IP 就是一个反向代理的 IP 地址。这个反向代理的关键，就是 kube-proxy 组件。</p>
+<p>每个节点都会运行一个 kube-proxy 的进程，这个进程本身就是一个反向代理服务进程，其核心功能就是将 Service Endpoint 映射到后端的一组 Pod 里。这里默认采用 Round Robin 负载均衡算法，将流量轮流分发给后端的 Pod。当然这里也有一个可选项，对于某些状态未抽离的服务来说，会话保持是靠内存来实现的，Kubernetes 提供了通过修改 Service 的<code>service.spec.sessionAffinity</code>参数的值来实现会话保持特性的定向转发，假设设置为<code>ClientIP</code>，则将来自同一个 ClientIP的请求分发到同一个后端 Pod 上。</p>
+<p>此外，Service 的 Cluster IP 与 NodePort 是 kube-proxy 服务通过 Iptables 的 DNAT 转换实现的。kube-proxy 在运行过程中动态创建与 Service 相关的 Iptables 规则，这些规则实现了 Cluster IP及 NodePort 的请求流量重定向到 kube-proxy 进程上对应服务的代理端口的功能。</p>
+<p>综上，无论是 Cluster IP + target Port 还是 Node IP + Node Port的方式，都会被节点机的 Iptables 规则重定向到 kube-proxy 监听的 Service 服务代理端口中去。</p>
+<p><img src="/2017/06/23/初涉Kubernetes一/Kubernetes.004.png" alt="kube-proxy 分发逻辑"></p>
+<p>kube-proxy 负责 Iptables 的 DNAT 规则的维护，这个维护与 Service 的生命周期是息息相关的。kube-proxy 监听了 Service 的创建和删除的事件，实时维护这一套路由规则，当 Service 请求来临的时候，根据指定的规则转发到被改写后的 Pod IP 和 port。因此我们可以看到，Cluster IP 之所以称之为虚拟的 IP，是因为其仅仅是在 Iptables 里维护，并非实际意义的 IP。这个做法相当巧妙！</p>
+<p>我们来看下 sock-shop 微服务下 payment 的 Iptables 规则</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">[root@node2 ~]# iptables-save |grep payment</div><div class="line">-A KUBE-SEP-OO2TWKZ7ZV6AUJIZ -s 10.244.1.13/32 -m comment --comment &quot;sock-shop/payment:&quot; -j KUBE-MARK-MASQ</div><div class="line">-A KUBE-SEP-OO2TWKZ7ZV6AUJIZ -p tcp -m comment --comment &quot;sock-shop/payment:&quot; -m tcp -j DNAT --to-destination 10.244.1.13:80</div><div class="line">-A KUBE-SEP-UV4LMV4IYDXHR55Y -s 10.244.3.2/32 -m comment --comment &quot;sock-shop/payment:&quot; -j KUBE-MARK-MASQ</div><div class="line">-A KUBE-SEP-UV4LMV4IYDXHR55Y -p tcp -m comment --comment &quot;sock-shop/payment:&quot; -m tcp -j DNAT --to-destination 10.244.3.2:80</div><div class="line">-A KUBE-SERVICES ! -s 10.244.0.0/16 -d 10.109.104.9/32 -p tcp -m comment --comment &quot;sock-shop/payment: cluster IP&quot; -m tcp --dport 80 -j KUBE-MARK-MASQ</div><div class="line">-A KUBE-SERVICES -d 10.109.104.9/32 -p tcp -m comment --comment &quot;sock-shop/payment: cluster IP&quot; -m tcp --dport 80 -j KUBE-SVC-T7TCZ5NWHRXELJYN</div><div class="line">-A KUBE-SVC-T7TCZ5NWHRXELJYN -m comment --comment &quot;sock-shop/payment:&quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-OO2TWKZ7ZV6AUJIZ</div><div class="line">-A KUBE-SVC-T7TCZ5NWHRXELJYN -m comment --comment &quot;sock-shop/payment:&quot; -j KUBE-SEP-UV4LMV4IYDXHR55Y</div></pre></td></tr></table></figure>
+<p>其中 <code>-j DNAT --to-destination 10.244.1.13:80</code>改写了 Packet 数据包的目的地址和端口，将其映射到后端的 Pod IP</p>
+<p>至于改写之后的 IP 地址为什么就能路由到对应的 Pod 上呢？这个下一篇文章讨论。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">[root@kafka4 ~]# iptables --table nat --list |grep payment</div><div class="line">KUBE-MARK-MASQ  all  --  10.244.1.13          anywhere             /* sock-shop/payment: */</div><div class="line">DNAT       tcp  --  anywhere             anywhere             /* sock-shop/payment: */ tcp to:10.244.1.13:80</div><div class="line">KUBE-MARK-MASQ  all  --  10.244.3.2           anywhere             /* sock-shop/payment: */</div><div class="line">DNAT       tcp  --  anywhere             anywhere             /* sock-shop/payment: */ tcp to:10.244.3.2:80</div><div class="line">KUBE-MARK-MASQ  tcp  -- !10.244.0.0/16        10.109.104.9         /* sock-shop/payment: cluster IP */ tcp dpt:http</div><div class="line">KUBE-SVC-T7TCZ5NWHRXELJYN  tcp  --  anywhere             10.109.104.9         /* sock-shop/payment: cluster IP */ tcp dpt:http</div><div class="line">KUBE-SEP-OO2TWKZ7ZV6AUJIZ  all  --  anywhere             anywhere             /* sock-shop/payment: */ statistic mode random probability 0.50000000000</div><div class="line">KUBE-SEP-UV4LMV4IYDXHR55Y  all  --  anywhere             anywhere             /* sock-shop/payment: */</div></pre></td></tr></table></figure>
+<p>对于使用 NodePort 的方式绑定 Node 上的端口的情况，可以看这个 front-end 容器的例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[root@kafka4 ~]# iptables-save |grep front-end</div><div class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;sock-shop/front-end:&quot; -m tcp --dport 30001 -j KUBE-MARK-MASQ</div><div class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;sock-shop/front-end:&quot; -m tcp --dport 30001 -j KUBE-SVC-LFMD53S3EZEAOUSJ</div><div class="line">...省略后面内容...</div></pre></td></tr></table></figure></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>本篇对 Kubernetes 的介绍暂时就到这里，下一篇将具体研究 Kubernetes 的网络解决方案。</p>
+<p>Further Reading<br><a href="https://github.com/kubernetes/community/blob/master/contributors/devel/scheduler_algorithm.md" target="_blank" rel="external">https://github.com/kubernetes/community/blob/master/contributors/devel/scheduler_algorithm.md</a><br><a href="https://github.com/kubernetes/community/tree/master/contributors/design-proposals" target="_blank" rel="external">https://github.com/kubernetes/community/tree/master/contributors/design-proposals</a><br><a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture.md" target="_blank" rel="external">https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture.md</a><br><a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank" rel="external">https://kubernetes.io/docs/concepts/services-networking/service/</a><br>《Kubernetes 权威指南：从 Docker 到 Kubernetes 实践全接触》</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/06/28/初涉Kubernetes二/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            初涉 Kubernetes(二)：网络专题
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">Kubeadm 搭建 Kubernetes 集群</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/06/23/初涉Kubernetes一/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

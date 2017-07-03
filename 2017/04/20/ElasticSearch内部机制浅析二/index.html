@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>ElasticSearch 内部机制浅析（二） | 茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="大数据,Java,全文搜索,多线程" />
+    
+    <meta name="description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ElasticSearch 内部机制浅析（二）">
+<meta property="og:url" content="https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
+<meta property="og:image" content="https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/cap.jpg">
+<meta property="og:updated_time" content="2017-05-24T04:06:55.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ElasticSearch 内部机制浅析（二）">
+<meta name="twitter:description" content="前言上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。
+Split Brain之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的discovery.zen.minimum_master_nod">
+<meta name="twitter:image" content="https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/cap.jpg">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/大数据/">大数据</a>
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-ElasticSearch内部机制浅析二" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        ElasticSearch 内部机制浅析（二）
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2017/04/20/ElasticSearch内部机制浅析二/" class="article-date">
+            <time datetime="2017-04-20T09:00:15.000Z" itemprop="datePublished">2017-04-20</time>
+        </a>
+    </div>
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Java/">Java</a>, <a class="tag-link" href="/tags/全文搜索/">全文搜索</a>, <a class="tag-link" href="/tags/多线程/">多线程</a>, <a class="tag-link" href="/tags/大数据/">大数据</a>
+    </div>
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇大致介绍了 ElasticSearch CRUD 的数据走向和涉及到的 Gossip 算法和每一种节点扮演的角色。我们对 ES 有了初步的认知，这一篇着重从 CAP 的角度去解读 ES 的分布式思想。</p>
+<h2 id="Split-Brain"><a href="#Split-Brain" class="headerlink" title="Split Brain"></a>Split Brain</h2><p>之前介绍过，对于去中心化的 ES 分布式系统来说，采用默认配置是无法避免脑裂问题的（可以参考前一篇文章的<code>discovery.zen.minimum_master_nodes</code>参数）。当然，任何分布式系统都是不能够接受脑裂的情况出现的，因此这里我们不过多讨论 P。</p>
+<h2 id="AP？CP？"><a href="#AP？CP？" class="headerlink" title="AP？CP？"></a>AP？CP？</h2><p><img src="/2017/04/20/ElasticSearch内部机制浅析二/cap.jpg" alt=""><br>既然不讨论 P，那么 ES 到底属于 CP 还是 AP 设计呢？<br><strong>我的理解是，脱离了具体配置谈 CAP 都是扯淡。</strong><br>为什么这么说呢？在我看来，AP 和 CP 并没有很明确的界限，一切根据配置而论，而配置本身会根据业务场景在 AP 与 CP 之间做一个折衷，即所谓的 Trade-Off。</p>
+<h2 id="读主分片-or-读副本？"><a href="#读主分片-or-读副本？" class="headerlink" title="读主分片 or 读副本？"></a>读主分片 or 读副本？</h2><p>读数据的时候我们可以根据 <code>Preference</code>指定读取的分片类型：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>_primary</td>
+<td>只会在主分片操作</td>
+</tr>
+<tr>
+<td>_primary_first</td>
+<td>优先主分片操作，如果主分片不可用，就会找其他分片操作</td>
+</tr>
+<tr>
+<td>_replica</td>
+<td>只会在副本分片操作</td>
+</tr>
+<tr>
+<td>_replica_first</td>
+<td>优先副本分片操作，如果副本分片不可用，就会找其他分片操作</td>
+</tr>
+<tr>
+<td>_local</td>
+<td>尽可能在本地分片操作</td>
+</tr>
+<tr>
+<td>_prefer_nodes:abc,xyz</td>
+<td>尽可能指定在 abc,xyz 节点上执行</td>
+</tr>
+<tr>
+<td>_shards:2,3</td>
+<td>在指定的分片上操作，2，3为分片 ID</td>
+</tr>
+<tr>
+<td>_only_nodes</td>
+<td>在<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster.html" target="_blank" rel="external">指定的 Node</a> 上操作</td>
+</tr>
+</tbody>
+</table>
+<p><code>Preference</code>的配置选择，实际上是 AP 与 CP 的权衡过程。如果对可用性要求很高，那么<code>_primary</code>这个参数是万万不可用；如果对一致性要求相对较高但可用性也需要保证的场景来说，可以使用<code>_primary_first</code>；如果对一致性要求极高的场景，但也就放弃了一定程度的可用性，这样用<code>_primary</code>会更合适一些。以此类推，需要根据自己的场景选择参数。</p>
+<h2 id="TransLog"><a href="#TransLog" class="headerlink" title="TransLog"></a>TransLog</h2><p>TransLog （即所谓的写前日志WAL，Write Ahead Log）的机制与 MySQL 的 binlog，HBase 的 Hlog 并无太大差别。TransLog 本身是写入到 FS cache 的，什么时候 fsync 到磁盘取决于数据能接受丢失的程度。<br>换句话说，如果需要 ES 具备十分强悍的写入能力，数据丢了一部分也没太大关系，这种情况你可以将 fsync 设置为异步执行的，并且把 fsync 的时间间隔设置的很长；如果你需要非常严谨的数据，不能够接受丢失数据，那么你可能在每次写入 TransLog 的时候都要 fsync 一次（这是默认机制）。<br>然而业务并非总是这么理想化，现实中同样需要在可用性与一致性两者之间做权衡。<br>下面介绍 TransLog 的相关配置。</p>
+<p><strong>TransLog Settings（持久化策略配置）</strong>：</p>
+<ul>
+<li><code>index.translog.durability</code>：如果设为 <code>async</code> ，默认情况下，ES 会每隔五秒对 TransLog 执行一次 fsync 和 commit 的操作；如果设为 <code>request(default)</code>，则在每次真正执行index、delete、update 或者 bulk index 操作前立刻将 TransLog fsync 到每一个主分片和副本分片中，并返回成功；</li>
+<li><code>index.translog.sync_interval</code>：只有将<code>index.translog.durability</code>设置为<code>async</code>时才有效，默认5s，表示 TransLog 持久化的时间间隔。</li>
+</ul>
+<p><strong>Flush Settings（TransLog清洗配置）</strong>：<br>为了避免 Translog 文件太大导致恢复过慢，适当的清洗是必要的。<br><code>index.translog.flush_threshold_size</code>：当 translog 日志达到这个配置大小的时候将执行一次 Flush 操作，默认<code>512mb</code>；<br>值得一提，默认情况下每隔三十分钟会 Flush 一次。但一般情况下不会手动调整清洗策略。</p>
+<blockquote>
+<p>An Elasticsearch flush is the process of performing a Lucene commit and starting a new translog.</p>
+</blockquote>
+<p>ES 的 Flush 操作包含了 Lucene索引的 fsync 以及 Translog 的清空，两个操作，因此日志清洗并不会导致数据丢失！</p>
+<p>数据恢复的话这里没什么好说的，和其他分布式存储的 WAL 基本一致，从磁盘读取出 TransLog，然后 Replay 即可。</p>
+<h2 id="并发策略之悲观锁"><a href="#并发策略之悲观锁" class="headerlink" title="并发策略之悲观锁"></a>并发策略之悲观锁</h2><p>ES 不支持 ACID 事务，ES 无法确保多个 Documents 处在同一个事务里。如果我们用 RDBS 存储业务数据，ES 只是作为一个搜索引擎对业务数据做了一份副本而已，这可能是基于 binlog 有序同步过来的。这种情况下，数据的 ACID 由 RDBS 来控制，RDBS 本身是有事务的，这种用法并不存在并发问题。</p>
+<p>可当不使用 RDBS 的时候，ES 就直接拿来做可靠性存储了，这时候的 ACID 怎么保证呢？</p>
+<p>一个不完美的方案就是悲观锁，ES 是通过创建 lock 文件来对资源进行锁定，与其他线程隔离开来，控制并发。锁大致根据用途分为如下几种：</p>
+<ul>
+<li><strong>全局锁（Global Locking）</strong>：<br>获取全局锁</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/global/_create</div></pre></td></tr></table></figure>
+<p>执行操作语句完后释放全局锁，如果在已锁状态下加锁，会报错，中断程序无法继续运行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">DELETE /fs/lock/global</div></pre></td></tr></table></figure>
+<p>其性能最差，不推荐使用。</p>
+<ul>
+<li><strong>文档锁（Document Locking）</strong>：<br>给单个 document 以一个文档锁，这个时候把锁的影响范围从全局缩小到了文档级别，更细颗粒，提高并发性能。<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/_bulk</div><div class="line">&#123; &quot;create&quot;: &#123; &quot;_id&quot;: 1&#125;&#125;</div><div class="line">&#123; &quot;process_id&quot;: 123    &#125;</div><div class="line">&#123; &quot;create&quot;: &#123; &quot;_id&quot;: 2&#125;&#125;</div><div class="line">&#123; &quot;process_id&quot;: 123    &#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>分别给 id 为1和2的 document 上了锁，这里需要指定唯一的进程 ID 123。不过这里要注意的是，一旦document 上锁，其他线程想给它加锁是会报错的，因此可以达到互斥的效果，报错后程序就中断，无法执行对应的操作了。<br>为了使 lock 可以被查到可以调用<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">POST /fs/_refresh</div></pre></td></tr></table></figure></p>
+<p>而后可以浏览一下进程 ID 为123的 lock<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">GET /fs/lock/_search?scroll=1m</div><div class="line">&#123;</div><div class="line">    &quot;sort&quot; : [&quot;_doc&quot;],</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;match&quot; : &#123;</div><div class="line">            &quot;process_id&quot; : 123</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>为了达到锁可以重入的效果，我们可以执行这么一句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /fs/lock/1/_update</div><div class="line">&#123;</div><div class="line">  &quot;upsert&quot;: &#123; &quot;process_id&quot;: 123 &#125;,</div><div class="line">  &quot;script&quot;: &quot;if ( ctx._source.process_id != process_id )</div><div class="line">  &#123; assert false &#125;; ctx.op = &apos;noop&apos;;&quot;</div><div class="line">  &quot;params&quot;: &#123;</div><div class="line">    &quot;process_id&quot;: 123</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>意思是，原本已经上锁的时候再去加锁会出现报错，哪怕是这个锁的持有者二次加锁也会报错。现在用这种方式获取锁好处就是使得锁本身是可以被持有者重入多次而不会报错的。</p>
+<p>最后释放锁<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">PUT /fs/lock/_bulk</div><div class="line">&#123; &quot;delete&quot;: &#123; &quot;_id&quot;: 1&#125;&#125;</div><div class="line">&#123; &quot;delete&quot;: &#123; &quot;_id&quot;: 2&#125;&#125;</div></pre></td></tr></table></figure></p>
+<ul>
+<li><strong>文件树锁（Tree Locking）</strong>：<br>除了以上的锁以外，ES 还支持文件目录锁。目录锁的特点是既存在独占锁（Exclusive Lock），又存在共享锁（Shared Lock）。这里就涉及到的原理上和上边几乎一样，只不过独占锁属性应该这么设置：<figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123; <span class="string">"lock_type"</span>: <span class="string">"exclusive"</span> &#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>共享锁则应该这么来<br><figure class="highlight js"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  <span class="string">"lock_type"</span>:  <span class="string">"shared"</span>,</div><div class="line">  <span class="string">"lock_count"</span>: <span class="number">1</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这里的 lock_count 表示已经被多少个实例共享了。<br>尝试获取锁可以改成这样<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">POST /fs/lock/%2Fclinton/_update</div><div class="line">&#123;</div><div class="line">  &quot;upsert&quot;: &#123;</div><div class="line">    &quot;lock_type&quot;:  &quot;shared&quot;,</div><div class="line">    &quot;lock_count&quot;: 1</div><div class="line">  &#125;,</div><div class="line">  &quot;script&quot;: &quot;if (ctx._source.lock_type == &apos;exclusive&apos;)</div><div class="line">  &#123; assert false &#125;; ctx._source.lock_count++&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>判断如果是独占锁则抛错，如果是共享锁则将 lock_count+1。<br>当然，这里也可以改成可重入的，不多赘述。</p>
+<blockquote>
+<p><strong>Tips</strong>：以上几种锁并非只针对 ES 的资源来使用，资源可以是各种各样的，甚至可以拿 ES 做分布式锁来使用。</p>
+</blockquote>
+<p>悲观锁的实现就是为了强数据一致性而产生的，但是在使用悲观锁的时候一定要慎重，务必要想清楚你的业务场景用这种很重的锁是否合适？如果十分有必要用，你就得思考如何缩小颗粒度来减小锁影响的范围，甚至我个人觉得在用到悲观锁的时候，ES 并非是一个很不错的选择，我们甚至可以借助 Zookeeper 或者 Redis 等第三方中间件来实现分布式锁，将 ES 的资源隔离开来。<br>另外，无论哪种锁都无法确保当某个线程获得锁以后挂了，都务必考虑锁的释放问题，避免死锁。这个就不在本文讨论范围。</p>
+<h2 id="并发策略之乐观并发控制"><a href="#并发策略之乐观并发控制" class="headerlink" title="并发策略之乐观并发控制"></a>并发策略之乐观并发控制</h2><p>乐观并发控制（optimistic concurrency control）的事务包括以下阶段：</p>
+<blockquote>
+<ul>
+<li>读取：事务将数据读入缓存，这时系统会给事务分派一个时间戳。</li>
+<li>校验：事务执行完毕后，进行提交。这时同步校验所有事务，如果事务所读取的数据在读取之后又被其他事务修改，则产生冲突，事务被中断回滚。</li>
+<li>写入：通过校验阶段后，将更新的数据写入数据库。<br>用以确保较新版本的数据不会被旧版本的数据覆盖</li>
+</ul>
+</blockquote>
+<p>ES 是怎么保证的是老版本数据绝对不会覆盖新版本呢？<br>大致是先读取需要被修改的记录的最新版本号，然后利用 CAS 算法将对记录做出修改，一旦修改成功，就会将数据平行拷贝到各个节点做副本。因为考虑到某些 replica 同步的过程是平行且异步化的，当更新十分频繁的时候，数据的先来后到谁都说不准，因此对于每个 Document，ES 都会指定一个<code>_version</code>字段存储版本号，而这个版本号会随着 document 的每次变更而自增，每一个新的数据都有着固定的版本号，用以标识数据的先来后到，老版本无法覆盖新版本，这就确保分片之间的数据不会出现不一致的情况，甚至可以避免数据丢失。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>CP？AP？这或许并不是那么重要，但是我很看重这样的思考过程，哪怕是没有结果，在这个过程里可以增进对 ES 的认知和理解，而不会单纯将一个分布式系统简单归纳为 AP 还是 CP。<br>但不得不说，ES 还是非常适合 AP 场景的，并且他的 TransLog 机制对数据的最终一致性也有很强有力的保障。</p>
+<p>之后还会继续更新 ES 的相关文章，To Be Continued…</p>
+<p>Further Reading:</p>
+<p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-preference.html</a><br><a href="http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02" target="_blank" rel="external">http://www.infoq.com/cn/articles/anatomy-of-an-elasticsearch-cluster-part02</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/2.x/concurrency-solutions.html</a><br><a href="https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html" target="_blank" rel="external">https://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html</a><br><a href="https://en.wikipedia.org/wiki/Optimistic_concurrency_control" target="_blank" rel="external">https://en.wikipedia.org/wiki/Optimistic_concurrency_control</a><br><a href="https://zh.wikipedia.org/wiki/CAP定理" target="_blank" rel="external">https://zh.wikipedia.org/wiki/CAP定理</a></p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/04/27/ElasticSearch内部机制浅析三/" id="article-nav-newer" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">下一篇</strong>
+        <p class="article-nav-title">
+        
+            ElasticSearch 内部机制浅析（三）
+        
+        </p>
+        <i class="icon fa fa-chevron-right" id="icon-chevron-right"></i>
+    </a>
+    
+    
+        <a href="/2017/04/15/ElasticSearch内部机制浅析一/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">ElasticSearch 内部机制浅析（一）</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/28/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/28/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/28/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-06-28T08:56:15.000Z" itemprop="datePublished">2017-06-28</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/05/18/从LSM到HBase/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/05/18/从LSM到HBase/LSM_Tree.png)" alt="从 LSM Tree 到 HBase" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/分布式理论/">分布式理论</a></p>
+                            <p class="item-title"><a href="/2017/05/18/从LSM到HBase/" class="title">从 LSM Tree 到 HBase</a></p>
+                            <p class="item-date"><time datetime="2017-05-18T02:27:15.000Z" itemprop="datePublished">2017-05-18</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/04/27/ElasticSearch内部机制浅析三/segments.jpg)" alt="ElasticSearch 内部机制浅析（三）" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/大数据/">大数据</a></p>
+                            <p class="item-title"><a href="/2017/04/27/ElasticSearch内部机制浅析三/" class="title">ElasticSearch 内部机制浅析（三）</a></p>
+                            <p class="item-date"><time datetime="2017-04-27T09:00:15.000Z" itemprop="datePublished">2017-04-27</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 15px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 15px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 15px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12.5px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 15px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 15px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 17.5px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 15px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12.5px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 15px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 10px;">网络</a> <a href="/tags/调度算法/" style="font-size: 12.5px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2017 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2017/04/20/ElasticSearch内部机制浅析二/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
