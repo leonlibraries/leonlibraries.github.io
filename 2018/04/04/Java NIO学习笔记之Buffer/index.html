@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    
+    <title>茅屋为秋风所破歌</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+        <meta name="keywords" content="" />
+    
+    <meta name="description" content="Java NIO Buffer API缓冲区（Buffer）是 NIO 的一个重要概念，所有的网络数据，都需要Buffer 封装一层再出去。
+10 &amp;lt;= 标记（mark） &amp;lt;= 位置(position) &amp;lt;= 限制（limit） &amp;lt;= 容量 (capacity)
+首先搞清楚上面的概念，尤其是 limit 和 capacity 是不一样的
+
+It is very import">
+<meta property="og:type" content="article">
+<meta property="og:title" content="茅屋为秋风所破歌">
+<meta property="og:url" content="https://leonlibraries.github.io/2018/04/04/Java NIO学习笔记之Buffer/index.html">
+<meta property="og:site_name" content="茅屋为秋风所破歌">
+<meta property="og:description" content="Java NIO Buffer API缓冲区（Buffer）是 NIO 的一个重要概念，所有的网络数据，都需要Buffer 封装一层再出去。
+10 &amp;lt;= 标记（mark） &amp;lt;= 位置(position) &amp;lt;= 限制（limit） &amp;lt;= 容量 (capacity)
+首先搞清楚上面的概念，尤其是 limit 和 capacity 是不一样的
+
+It is very import">
+<meta property="og:image" content="http://img.zhaojie.me/blog/byte-order/500px-Big-Endian.png">
+<meta property="og:updated_time" content="2018-04-04T06:15:33.381Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="茅屋为秋风所破歌">
+<meta name="twitter:description" content="Java NIO Buffer API缓冲区（Buffer）是 NIO 的一个重要概念，所有的网络数据，都需要Buffer 封装一层再出去。
+10 &amp;lt;= 标记（mark） &amp;lt;= 位置(position) &amp;lt;= 限制（limit） &amp;lt;= 容量 (capacity)
+首先搞清楚上面的概念，尤其是 limit 和 capacity 是不一样的
+
+It is very import">
+<meta name="twitter:image" content="http://img.zhaojie.me/blog/byte-order/500px-Big-Endian.png">
+    
+
+    
+        <link rel="alternate" href="/" title="茅屋为秋风所破歌" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/titillium-web/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.0.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+    
+    
+        <script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "//hm.baidu.com/hm.js?2be7dcbaf7515622e413315f4dcb7c53";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    
+
+</head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                        <h2 class="subtitle-wrap">
+                            <p class="subtitle">技术心得分享</p>
+                        </h2>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                        <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/APM/">APM</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/云平台/">云平台</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/代码设计/">代码设计</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/全文搜索/">全文搜索</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/分布式理论/">分布式理论</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/前端那些事儿/">前端那些事儿</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/大数据/">大数据</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a></li></ul>
+                                    
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    未分类
+    </h1>
+</div>
+                        <div class="main-body-content">
+                            <article id="post-Java NIO学习笔记之Buffer" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <div class="article-meta">
+                
+    <div class="article-date">
+        <a href="/2018/04/04/Java NIO学习笔记之Buffer/" class="article-date">
+            <time datetime="2018-04-04T06:15:33.381Z" itemprop="datePublished">2018-04-04</time>
+        </a>
+    </div>
+
+                
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            <h3 id="Java-NIO-Buffer-API"><a href="#Java-NIO-Buffer-API" class="headerlink" title="Java NIO Buffer API"></a>Java NIO Buffer API</h3><p>缓冲区（Buffer）是 NIO 的一个重要概念，所有的网络数据，都需要Buffer 封装一层再出去。</p>
+<figure class="highlight basic"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="symbol">0 </span>&lt;= 标记（mark） &lt;= 位置(position) &lt;= 限制（limit） &lt;= 容量 (capacity)</div></pre></td></tr></table></figure>
+<p>首先搞清楚上面的概念，尤其是 limit 和 capacity 是不一样的</p>
+<blockquote>
+<p>It is very important to understand the difference between the limit and the capacity of the buffer. The capacity is the maximum number of items the buffer can contain; the limit is a value, somewhere between 0 and the capacity, representing an arbitrary limitation for the buffer set by using the limit or the flip methods.</p>
+</blockquote>
+<h5 id="flip"><a href="#flip" class="headerlink" title="flip()"></a>flip()</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">buffer.limit(buffer.position()).position(<span class="number">0</span>);</div></pre></td></tr></table></figure>
+<p>flip 是人为给一个 buffer 的读取限制，这个限制就叫 limit，limit 这个值只能是在0和 capacity 之间，而capacity 是 allocation 时分配的物理限制，两者完全不一样。除此之外，flip还会将 position 设置为0。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//buffer 里塞十个数字 0 1 2 3 4 5 6 7 8 9</span></div><div class="line">IntBuffer buffer = IntBuffer.allocate(<span class="number">10</span>);</div><div class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; buffer.capacity(); i++) &#123;</div><div class="line">  buffer.put(i);</div><div class="line">&#125;</div><div class="line"><span class="comment">// Sample of using flip</span></div><div class="line">buffer.position(<span class="number">5</span>);</div><div class="line">buffer.flip();</div><div class="line"><span class="keyword">while</span> (buffer.hasRemaining()) &#123;</div><div class="line">  <span class="keyword">int</span> i = buffer.get();</div><div class="line">  System.out.println(<span class="string">"i="</span>+i);</div><div class="line">&#125;</div><div class="line"><span class="comment">// 读出的结果就是1、2、3、4、5</span></div></pre></td></tr></table></figure></p>
+<p>例如，如果一个通道的 read()操作完成，而您想要查看被通道放入缓冲区内的数据，就需要调用 flip 操作，将其翻转。</p>
+<h5 id="clear"><a href="#clear" class="headerlink" title="clear()"></a>clear()</h5><p>这个方法的作用就是用来初始化缓存空间，把 position 重置为0，例如读取文件时将文件内容置入缓存时要先执行此方法。上文提到的 limit，也会在初始化过程中清理掉</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Sample of using clear</span></div><div class="line">buffer.clear();</div><div class="line"><span class="keyword">while</span> (buffer.hasRemaining()) &#123;</div><div class="line">  <span class="keyword">int</span> i = buffer.get();</div><div class="line">  System.out.println(<span class="string">"i="</span>+i);</div><div class="line">&#125;</div><div class="line"><span class="comment">// 输出 0-9</span></div></pre></td></tr></table></figure>
+<h5 id="rewind"><a href="#rewind" class="headerlink" title="rewind()"></a>rewind()</h5><p>和 clear 类似，会把 position 重置为0，然而不会清掉 limit；</p>
+<h5 id="compact"><a href="#compact" class="headerlink" title="compact()"></a>compact()</h5><p>压缩。</p>
+<p>一个capacity 为10的 ByteBuffer，假设已经读的位置为 position 5，如果此时调用 compact 方法，那么5之前的数据将会视为应该清理的垃圾数据，该算法会自动将5之后的有效数据（limit 之前）做一次拷贝，拷贝的起始地址为 ByteBuffer position 0，而此时 position 的位置为有效数据的最后一个，而 limit 则重设为 capacity。</p>
+<h5 id="mark-amp-reset"><a href="#mark-amp-reset" class="headerlink" title="mark() &amp; reset()"></a>mark() &amp; reset()</h5><p>标记。<br>在调用 mark 方法之前，Buffer 中是不存在标记的，对应的 reset 方法就是回到当前标记的 position，如果 当前不存在 mark，则会抛出异常 InvalidMarkException</p>
+<h5 id="equals-amp-compareTo"><a href="#equals-amp-compareTo" class="headerlink" title="equals() &amp; compareTo()"></a>equals() &amp; compareTo()</h5><p><strong>equals</strong> 函数是用来判断两个缓冲区数据是否等价。<br>等价的充要条件：</p>
+<ul>
+<li>两个 buffer 类型要相同；</li>
+<li>两个 buffer 对象剩余相同数量的元素（position -&gt; limit = 剩余元素）;</li>
+<li>剩余元素的顺序必须一致</li>
+</ul>
+<p><strong>compareTo</strong><br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(ByteBuffer that)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> n = <span class="keyword">this</span>.position() + Math.min(<span class="keyword">this</span>.remaining(), that.remaining());</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.position(), j = that.position(); i &lt; n; i++, j++) &#123;</div><div class="line">            <span class="keyword">int</span> cmp = compare(<span class="keyword">this</span>.get(i), that.get(j));</div><div class="line">            <span class="keyword">if</span> (cmp != <span class="number">0</span>)</div><div class="line">                <span class="keyword">return</span> cmp;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.remaining() - that.remaining();</div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<p>比较两个同类型 buffer 对象从 position 到两者最短 remaining数的值大小，如果是 ByteBuffer ，每个元素就按照 Byte 的compare 比较，从头到尾，比较出第一个不等于0的值即可返回。</p>
+<h5 id="duplicate"><a href="#duplicate" class="headerlink" title="duplicate()"></a>duplicate()</h5><p>复制缓冲区</p>
+<h5 id="slice"><a href="#slice" class="headerlink" title="slice()"></a>slice()</h5><p>与复制不同的是，slice 只从 position -&gt; limit 截取，并复制生成一个新的缓冲区，这个新的缓冲区 capacity 仅仅是原有缓冲区的 <code>limit 减去 position</code></p>
+<h5 id="字节顺序"><a href="#字节顺序" class="headerlink" title="字节顺序"></a>字节顺序</h5><p>先来理解什么是大端排序（Big-Endian），什么是小端排序（Big-Endian）<br>NUXI 问题 </p>
+<p>把 UN 和 IX 分别作为短整型存储（各2个字节）</p>
+<ul>
+<li>UNIX 在大端机存储是『UNIX』</li>
+<li>UNIX 在小端机存储则是『NUXI』</li>
+</ul>
+<p>再比如一个整型存储的数据（4个字节）<br>大端机是这样存储：<br><img src="http://img.zhaojie.me/blog/byte-order/500px-Big-Endian.png" alt="enter image description here"><br>小端机是这样存储:<br><img src="http://img.zhaojie.me/blog/byte-order/500px-Little-Endian.png" alt="enter image description here"></p>
+<p>这会导致什么问题呢？<br>网络传输是默认大端排序的，而如果传输到了小端机上，那么小端机读到的数据将十分诡异了。</p>
+<p>Java 可以通过 ByteBuffer.order()方法返回当前字节排序，并可以控制排序规则</p>
+<h5 id="直接缓冲区-Direct-Buffer-Memory"><a href="#直接缓冲区-Direct-Buffer-Memory" class="headerlink" title="直接缓冲区(Direct Buffer Memory)"></a>直接缓冲区(Direct Buffer Memory)</h5><ul>
+<li>能直接进行 I/O 交互的只有 ByteBuffer；</li>
+<li>所有I/O操作都是从直接缓冲区读写数据；</li>
+<li>直接缓冲区属于堆外内存，不属于 JVM 直接管辖的区域，操作系统直接管辖；</li>
+<li>ByteBuffer 如果分配在了堆内存里，那么在执行I/O 操作的时候，要多一步处理步骤，即把堆内存中的 Buffer 拷贝到直接缓冲区，因此直接缓冲区写入 Channel 的速度会更快；</li>
+<li>通过 ByteBuffer.allocateDirect() 分配直接缓冲区</li>
+</ul>
+<h5 id="视图缓冲区"><a href="#视图缓冲区" class="headerlink" title="视图缓冲区"></a>视图缓冲区</h5><p>ByteBuffer 特有方法</p>
+<ul>
+<li>asCharBuffer()</li>
+<li>asLongBuffer()</li>
+<li>asIntBuffer()</li>
+<li>asShortBuffer()</li>
+<li>asFloatBuffer()</li>
+<li>asDoubleBuffer()</li>
+</ul>
+<p>以limit 为上界，position 为期点，做切分（slice），获取出一个视图 Buffer。</p>
+<blockquote>
+<p>之所以称之为视图，是因为其并非真正副本，而是与生成视图之前的 ByteBuffer 对应的是同一个内存区域。如果需要使之为副本，则要调用 slice 或 duplicate 方法</p>
+</blockquote>
+<h5 id="数据元素视图"><a href="#数据元素视图" class="headerlink" title="数据元素视图"></a>数据元素视图</h5><p>获取数据元素方法很多，不一一列举，举个例子<br>getInt(): ByteBuffer 调用这个方法，就会从当前 position 往后取四个字节，根据字节排序规则，生成出具体的Int 类型的值，以 Int 类型展示。</p>
+
+        </div>
+        <footer class="article-footer">
+            
+
+    <div class="bdsharebuttonbox">
+    <a href="#" class="bds_more" data-cmd="more">分享到：</a>
+    <a href="#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间">QQ空间</a>
+    <a href="#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博">新浪微博</a>
+    <a href="#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博">腾讯微博</a>
+    <a href="#" class="bds_renren" data-cmd="renren" title="分享到人人网">人人网</a>
+    <a href="#" class="bds_weixin" data-cmd="weixin" title="分享到微信">微信</a>
+</div>
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"share":{"bdSize":16}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+<style>
+    .bdshare_popup_box {
+        border-radius: 4px;
+        border: #e1e1e1 solid 1px;
+    }
+    .bdshare-button-style0-16 a,
+    .bdshare-button-style0-16 .bds_more {
+        padding-left: 20px;
+        margin: 6px 10px 6px 0;
+    }
+    .bdshare_dialog_list a,
+    .bdshare_popup_list a,
+    .bdshare_popup_bottom a {
+        font-family: 'Microsoft Yahei';
+    }
+    .bdshare_popup_top {
+        display: none;
+    }
+    .bdshare_popup_bottom {
+        height: auto;
+        padding: 5px;
+    }
+</style>
+
+
+
+        </footer>
+    </div>
+</article>
+
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        <p>关注我 :</p>
+        <ul class="social-links">
+            
+                
+                <li>
+                    <a class="social-tooltip" title="github" href="https://github.com/leonlibraries" target="_blank">
+                        <i class="icon fa fa-github"></i>
+                    </a>
+                </li>
+                
+            
+                
+                <li>
+                    <a class="social-tooltip" title="rss" href="/" target="_blank">
+                        <i class="icon fa fa-rss"></i>
+                    </a>
+                </li>
+                
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/07/07/初涉Kubernetes三/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">初涉 Kubernetes(三)： Overlay 与直接路由</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2018/04/04/Java NIO学习笔记之Buffer/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://img.zhaojie.me/blog/byte-order/500px-Big-Endian.png)" alt="" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"></p>
+                            <p class="item-title"><a href="/2018/04/04/Java NIO学习笔记之Buffer/" class="title"></a></p>
+                            <p class="item-date"><time datetime="2018-04-04T06:15:33.381Z" itemprop="datePublished">2018-04-04</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/07/07/初涉Kubernetes三/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/07/07/初涉Kubernetes三/" class="title">初涉 Kubernetes(三)： Overlay 与直接路由</a></p>
+                            <p class="item-date"><time datetime="2017-07-07T14:56:15.000Z" itemprop="datePublished">2017-07-07</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/07/03/初涉Kubernetes二/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/07/03/初涉Kubernetes二/Kubernetes.005.png)" alt="初涉 Kubernetes(二)：网络专题" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/07/03/初涉Kubernetes二/" class="title">初涉 Kubernetes(二)：网络专题</a></p>
+                            <p class="item-date"><time datetime="2017-07-03T14:56:15.000Z" itemprop="datePublished">2017-07-03</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/23/初涉Kubernetes一/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/23/初涉Kubernetes一/kube-architecture.png)" alt="初涉 Kubernetes(一)：组件认知" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/23/初涉Kubernetes一/" class="title">初涉 Kubernetes(一)：组件认知</a></p>
+                            <p class="item-date"><time datetime="2017-06-23T07:56:15.000Z" itemprop="datePublished">2017-06-23</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="thumbnail">
+    
+    
+        <span style="background-image:url(/2017/06/15/Kubeadm搭建Kubernetes集群/monitor.jpeg)" alt="Kubeadm 搭建 Kubernetes 集群" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/云平台/">云平台</a></p>
+                            <p class="item-title"><a href="/2017/06/15/Kubeadm搭建Kubernetes集群/" class="title">Kubeadm 搭建 Kubernetes 集群</a></p>
+                            <p class="item-date"><time datetime="2017-06-15T02:27:15.000Z" itemprop="datePublished">2017-06-15</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/APM/">APM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/云平台/">云平台</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/代码设计/">代码设计</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/全文搜索/">全文搜索</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/分布式理论/">分布式理论</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/前端那些事儿/">前端那些事儿</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/大数据/">大数据</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/当我们在谈论多线程的时候，我们在谈论什么/">当我们在谈论多线程的时候，我们在谈论什么</a><span class="category-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">2</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CDH/">CDH</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ECMAScript6/">ECMAScript6</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Flannel/">Flannel</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HBase/">HBase</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Hadoop/">Hadoop</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/">JVM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/">Java</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Kubernetes/">Kubernetes</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSM/">LSM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Lucene/">Lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/React/">React</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Relay/">Relay</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/StupidIE/">StupidIE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Systemd/">Systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/full-text-search/">full-text search</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lucene/">lucene</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web前端/">web前端</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/代码设计/">代码设计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/全文搜索/">全文搜索</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/分布式算法/">分布式算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/前端组件化/">前端组件化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/图片搜索/">图片搜索</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/多线程/">多线程</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/大数据/">大数据</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/干货/">干货</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/并发编程/">并发编程</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/应用编排/">应用编排</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/模块化/">模块化</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/监控/">监控</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/调度算法/">调度算法</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/面向对象/">面向对象</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/CDH/" style="font-size: 10px;">CDH</a> <a href="/tags/Docker/" style="font-size: 16px;">Docker</a> <a href="/tags/ECMAScript6/" style="font-size: 14px;">ECMAScript6</a> <a href="/tags/Flannel/" style="font-size: 10px;">Flannel</a> <a href="/tags/HBase/" style="font-size: 14px;">HBase</a> <a href="/tags/Hadoop/" style="font-size: 12px;">Hadoop</a> <a href="/tags/JVM/" style="font-size: 14px;">JVM</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Kubernetes/" style="font-size: 16px;">Kubernetes</a> <a href="/tags/LSM/" style="font-size: 10px;">LSM</a> <a href="/tags/Lucene/" style="font-size: 10px;">Lucene</a> <a href="/tags/React/" style="font-size: 10px;">React</a> <a href="/tags/Relay/" style="font-size: 10px;">Relay</a> <a href="/tags/StupidIE/" style="font-size: 10px;">StupidIE</a> <a href="/tags/Systemd/" style="font-size: 10px;">Systemd</a> <a href="/tags/full-text-search/" style="font-size: 10px;">full-text search</a> <a href="/tags/lucene/" style="font-size: 10px;">lucene</a> <a href="/tags/web前端/" style="font-size: 18px;">web前端</a> <a href="/tags/代码设计/" style="font-size: 10px;">代码设计</a> <a href="/tags/全文搜索/" style="font-size: 14px;">全文搜索</a> <a href="/tags/分布式算法/" style="font-size: 10px;">分布式算法</a> <a href="/tags/前端组件化/" style="font-size: 10px;">前端组件化</a> <a href="/tags/图片搜索/" style="font-size: 10px;">图片搜索</a> <a href="/tags/多线程/" style="font-size: 10px;">多线程</a> <a href="/tags/大数据/" style="font-size: 20px;">大数据</a> <a href="/tags/干货/" style="font-size: 10px;">干货</a> <a href="/tags/并发编程/" style="font-size: 12px;">并发编程</a> <a href="/tags/应用编排/" style="font-size: 16px;">应用编排</a> <a href="/tags/模块化/" style="font-size: 10px;">模块化</a> <a href="/tags/监控/" style="font-size: 10px;">监控</a> <a href="/tags/网络/" style="font-size: 12px;">网络</a> <a href="/tags/调度算法/" style="font-size: 14px;">调度算法</a> <a href="/tags/面向对象/" style="font-size: 10px;">面向对象</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="https://www.zhihu.com/people/wang-li-ran/activities">知乎</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2018 雨夜偷牛的人</p>
+                <p>Powered by <a href="//hexo.io/" target="_blank">Hexo</a>. Theme by <a href="//github.com/ppoffice" target="_blank">PPOffice</a></p>
+            </div>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_shortname = 'hexo-theme-hueman';
+    
+    
+    var disqus_url = 'https://leonlibraries.github.io/2018/04/04/Java NIO学习笔记之Buffer/';
+    
+    (function() {
+    var dsq = document.createElement('script');
+    dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+    </script>
+
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+    
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
